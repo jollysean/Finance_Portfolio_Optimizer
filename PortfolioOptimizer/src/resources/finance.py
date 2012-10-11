@@ -9,10 +9,10 @@ from datetime import date
 class Portfolio(object):
     """Represents a portfolio, which consists of a list of assets as well as a start date."""
     
-    def __init__(self, assets=[], startdate=date.min, meanmethod="Log"):
+    def __init__(self, assets=[], startdate=date.min, ratemethod="Log"):
         self.assets = assets
         self.startdate = startdate
-        self.meanmethod = meanmethod
+        self.ratemethod = ratemethod
         
     def addAsset(self, asset):
         self.assets.append(asset)
@@ -21,10 +21,10 @@ class Portfolio(object):
         totalstd = 0
         allocations = {}
         for asset in self.assets:
-            annstd = asset.getStd(self.startdate, self.meanmethod, True)
+            annstd = asset.getStd(self.startdate, self.ratemethod, True)
             totalstd += 1/annstd
         for asset in self.assets:
-            annstd = asset.getStd(self.startdate, self.meanmethod, True)
+            annstd = asset.getStd(self.startdate, self.ratemethod, True)
             allocations[asset.symbol] = (1/annstd)/totalstd
         return allocations
 

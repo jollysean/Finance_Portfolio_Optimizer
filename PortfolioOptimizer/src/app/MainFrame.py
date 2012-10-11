@@ -78,6 +78,11 @@ class MainFrame( gui.MainFrameBase ):
 			self.m_startingdate.SetValue(cal._pydate2wxdate(maxdate))
 			self.portfolio.startdate = maxdate
 		
+		if self.m_sdRadBox.GetStringSelection()=="Simple":
+			self.portfolio.ratemethod = "Simple"
+		else:
+			self.portfolio.ratemethod = "Log"
+		
 		for asset in self.portfolio.assets:
 			asset.rates = asset.getRatesOfReturn(self.portfolio.startdate)
 		
@@ -95,8 +100,8 @@ class MainFrame( gui.MainFrameBase ):
 			
 		for asset in self.portfolio.assets:
 	
-			annmean = asset.getMeanROR(self.portfolio.startdate, self.portfolio.meanmethod)
-			annstd = asset.getStd(self.portfolio.startdate, self.portfolio.meanmethod)
+			annmean = asset.getMeanROR(self.portfolio.startdate, self.portfolio.ratemethod, annualized=True)
+			annstd = asset.getStd(self.portfolio.startdate, self.portfolio.ratemethod, annualized=True)
 			pos = self.m_stocklist.FindItem(-1, asset.symbol)	
 			if pos ==-1:
 				pos = self.m_stocklist.ItemCount
@@ -136,7 +141,7 @@ class MainFrame( gui.MainFrameBase ):
 		method = self.m_sdRadBox.GetStringSelection()
 		if method != "Simple":
 			method = "Log"
-		self.portfolio.meanmethod = method
+		self.portfolio.ratemethod = method
 		self.calculateGrid()
 	
 	def m_mniExitClick( self, event ):
