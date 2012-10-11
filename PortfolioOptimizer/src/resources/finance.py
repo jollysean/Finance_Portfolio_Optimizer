@@ -21,10 +21,10 @@ class Portfolio(object):
         totalstd = 0
         allocations = {}
         for asset in self.assets:
-            annstd = asset.getStd(self.startdate, self.ratemethod, True)
+            annstd = asset.getStd(startdate=self.startdate, ratemethod=self.ratemethod, annualized=True)
             totalstd += 1/annstd
         for asset in self.assets:
-            annstd = asset.getStd(self.startdate, self.ratemethod, True)
+            annstd = asset.getStd(startdate=self.startdate, ratemethod=self.ratemethod, annualized=True)
             allocations[asset.symbol] = (1/annstd)/totalstd
         return allocations
 
@@ -33,46 +33,43 @@ class Asset:
     def __init__(self, symbol, prices):
         self.symbol = symbol
         self.prices = prices
-        self.startdate = min([p.date for p in self.prices])
-        self.rates = self.getRatesOfReturn()
-        
-    def getMeanVarStd(self, annualized=False):
-        mean = num.mean(self.rates)
-        variance = num.var(self.rates)
-        std = num.std(self.rates)
-        if annualized:
-            return (252*mean, 252*variance, num.sqrt(252)*std)
-        else:
-            return (mean, variance, std)
+        self.startdate = min([p.date for p in self.prices])    
     
-    def getVar(self, startdate=None, method="Log", annualized=False):
-        rates = self.getRatesOfReturn(startdate, method)
+    
+    
+    def getVar(self, rates=[], startdate=None, ratemethod="Log", annualized=False):
+        if len(rates)==0:
+            rates = self.getRatesOfReturn(startdate, ratemethod)
         var = num.var(rates)
         if annualized:
             var = var*252
         return var
         
-    def getStd(self, startdate=None, method="Log", annualized=False):
+    def getStd(self, rates=[], startdate=None, ratemethod="Log", annualized=False):
         if startdate==None:
             startdate = self.startdate
-        
-        rates = self.getRatesOfReturn(startdate, method)
+        if len(rates)==0:
+            rates = self.getRatesOfReturn(startdate, ratemethod)
+            
         std = num.std(rates)
         if annualized:
             std = num.sqrt(252)*std
         return std
      
         
-    def getMeanROR(self,startdate=None, method="Log", annualized=False):
+    def getMeanROR(self,rates=[],startdate=None, ratemethod="Log", annualized=False):
         if startdate==None:
             startdate = self.startdate
+        if len(rates)==0:
+            rates = self.getRatesOfReturn(startdate, ratemethod)
         
-        rates = self.getRatesOfReturn(startdate, method)
         meanROR = num.mean(rates)
         if annualized:
             meanROR = meanROR*252
         return meanROR
     
+    def getBeta(self, startdate=None, method=""):
+        pass
     
     def getRatesOfReturn(self, startdate=None, method="Log"):
         if startdate==None:

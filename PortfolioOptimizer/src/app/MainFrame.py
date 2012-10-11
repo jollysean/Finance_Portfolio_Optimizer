@@ -78,13 +78,13 @@ class MainFrame( gui.MainFrameBase ):
 			self.m_startingdate.SetValue(cal._pydate2wxdate(maxdate))
 			self.portfolio.startdate = maxdate
 		
-		if self.m_sdRadBox.GetStringSelection()=="Simple":
+		if self.m_meanCalcRadBox.GetStringSelection()=="Simple":
 			self.portfolio.ratemethod = "Simple"
 		else:
 			self.portfolio.ratemethod = "Log"
 		
 		for asset in self.portfolio.assets:
-			asset.rates = asset.getRatesOfReturn(self.portfolio.startdate)
+			asset.rates = asset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
 		
 		self.calculateGrid()
 		
@@ -94,24 +94,24 @@ class MainFrame( gui.MainFrameBase ):
 		if colcount < 4:
 			self.m_stocklist.InsertColumn(0, "Symbol")
 			self.m_stocklist.InsertColumn(1, "Mean Rate")
-			self.m_stocklist.InsertColumn(2, "Std. Deviation (ln)", width=120)
+			self.m_stocklist.InsertColumn(2, "Std. Deviation", width=120)
 			self.m_stocklist.InsertColumn(3, "Allocation")
 			
 			
 		for asset in self.portfolio.assets:
-	
-			annmean = asset.getMeanROR(self.portfolio.startdate, self.portfolio.ratemethod, annualized=True)
-			annstd = asset.getStd(self.portfolio.startdate, self.portfolio.ratemethod, annualized=True)
+			rates = asset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
+			annmean = 100 * asset.getMeanROR(rates, annualized=True)
+			annstd = 100 * asset.getStd(rates, annualized=True)
 			pos = self.m_stocklist.FindItem(-1, asset.symbol)	
 			if pos ==-1:
 				pos = self.m_stocklist.ItemCount
 				self.m_stocklist.InsertStringItem(pos, asset.symbol)
-				self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean))
-				self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd))
+				self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean)+"%")
+				self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd)+"%")
 				self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
 			else:
-				self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean))
-				self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd))
+				self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean)+"%")
+				self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd)+"%")
 				self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
 				
 	def removeSelClicked( self, event ):
@@ -138,7 +138,7 @@ class MainFrame( gui.MainFrameBase ):
 		pass
 	
 	def stdMethChanged( self, event ):
-		method = self.m_sdRadBox.GetStringSelection()
+		method = self.m_meanCalcRadBox.GetStringSelection()
 		if method != "Simple":
 			method = "Log"
 		self.portfolio.ratemethod = method
