@@ -10,6 +10,7 @@ import matplotlib.dates as mdates
 import matplotlib.backends.backend_wxagg as mpl
 import time
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
+import matplotlib.pyplot as plt
 
 # Implementing MainFrameBase
 class MainFrame( gui.MainFrameBase ):
@@ -32,15 +33,12 @@ class MainFrame( gui.MainFrameBase ):
 		prices = [(p.date, p.adjclosing) for p in stock.prices if p.date >= self.portfolio.startdate]
 		data = zip(*prices)
 		
-		pan = self.m_graphpanel
-		pan.figure = mpl.Figure()
-		pan.canvas = FigureCanvasWxAgg(pan, -1, pan.figure)
-		fig = pan.figure
-		fig.autofmt_xdate()
-		ax = fig.add_subplot(111)
-		ax.plot_date(data[0], data[1], '-', xdate=True)
-		fig.autofmt_xdate(.2, 30, 'right')
-		ax.set_title(stock.symbol)
+		plt.figure(1)
+		plt.subplot(111)
+		plt.plot_date(data[0], data[1], '-', xdate=True)
+		plt.ylabel("Market Value")
+		plt.title(stock.symbol)
+		plt.show()
 	
 	def m_addButtonClick( self, event ):
 		
@@ -52,8 +50,12 @@ class MainFrame( gui.MainFrameBase ):
 		"""Get the historical prices and
 		create a new Asset object for each stock symbol"""
 		for s in stocks:
-			exists = self.m_stocklist.FindItem(-1, s)
-			if exists ==-1:
+			exists = False
+			for a in self.portfolio.assets:
+				if a.symbol == s:
+					exists = True
+	
+			if not exists:
 				prices = u.getHistoricalPrices(s)
 				asset = fin.Asset(s, prices)
 				self.portfolio.addAsset(asset)
@@ -63,9 +65,10 @@ class MainFrame( gui.MainFrameBase ):
 		stock with the most recent startdate
 		"""
 		dates = [stock.startdate for stock in self.portfolio.assets]
-		dates.append(cal._wxdate2pydate(self.m_startingdate.GetValue()))
+		dateWidgetValue = cal._wxdate2pydate(self.m_startingdate.GetValue())
+		dates.append(dateWidgetValue)
 		maxdate = max(dates)
-		if maxdate != self.m_startingdate.GetValue:
+		if not maxdate == dateWidgetValue:
 			for stock in self.portfolio.assets:
 				if stock.startdate == maxdate:
 					datedictator = stock 
@@ -76,25 +79,66 @@ class MainFrame( gui.MainFrameBase ):
 			self.portfolio.startdate = maxdate
 		
 		for asset in self.portfolio.assets:
-			asset.rates = asset.getRatesOfReturn(self.portfolio.startdate)	
+			asset.rates = asset.getRatesOfReturn(self.portfolio.startdate)
 		
+		self.calculateGrid()
+		
+	def calculateGrid(self):
 		allocations = self.portfolio.getAllocations()
 		colcount = self.m_stocklist.ColumnCount
 		if colcount < 4:
 			self.m_stocklist.InsertColumn(0, "Symbol")
-			self.m_stocklist.InsertColumn(1, "Mean")
-			self.m_stocklist.InsertColumn(2, "Std. Deviation (ln)")
+			self.m_stocklist.InsertColumn(1, "Mean Rate")
+			self.m_stocklist.InsertColumn(2, "Std. Deviation (ln)", width=120)
 			self.m_stocklist.InsertColumn(3, "Allocation")
-		
+			
+			
 		for asset in self.portfolio.assets:
-			(annmean, annvar, annstd) = asset.getMeanVarStd(True)
-			pos = self.m_stocklist.InsertStringItem(0, asset.symbol)
-			self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean))
-			self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd))
-			self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
+	
+			annmean = asset.getMeanROR(self.portfolio.startdate, self.portfolio.meanmethod)
+			annstd = asset.getStd(self.portfolio.startdate, self.portfolio.meanmethod)
+			pos = self.m_stocklist.FindItem(-1, asset.symbol)	
+			if pos ==-1:
+				pos = self.m_stocklist.ItemCount
+				self.m_stocklist.InsertStringItem(pos, asset.symbol)
+				self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean))
+				self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd))
+				self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
+			else:
+				self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean))
+				self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd))
+				self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
+				
+	def removeSelClicked( self, event ):
+		sel = self.m_stocklist.GetFirstSelected()
+		if not sel == -1:
+			symbol = self.m_stocklist.GetItemText(sel)
+			idx = 0
+			for a in self.portfolio.assets:
+				if a.symbol ==symbol:
+					break
+				idx = idx + 1
+			del self.portfolio.assets[idx]
+			self.m_stocklist.DeleteItem(sel)
+			self.calculateGrid()
 			
+	
+	def removeAllClicked( self, event ):
+		del self.portfolio.assets
+		self.portfolio.assets = []
+		self.m_stocklist.DeleteAllItems()
+		self.calculateGrid()
 		
-			
+	def rfrChanged( self, event ):
+		pass
+	
+	def stdMethChanged( self, event ):
+		method = self.m_sdRadBox.GetStringSelection()
+		if method != "Simple":
+			method = "Log"
+		self.portfolio.meanmethod = method
+		self.calculateGrid()
+	
 	def m_mniExitClick( self, event ):
 		# TODO: Implement m_mniExitClick
 		pass
