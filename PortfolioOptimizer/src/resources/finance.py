@@ -4,6 +4,7 @@ Created on Sep 13, 2012
 @author: Josh
 '''
 import numpy as num
+import utilities as u
 from datetime import date
 
 class Portfolio(object):
@@ -32,38 +33,39 @@ class Asset:
     """Represents an asset"""
     def __init__(self, symbol, prices):
         self.symbol = symbol
-        self.prices = prices
-        self.startdate = min([p.date for p in self.prices])    
+        self.prices = {}
+        for p in prices:
+            self.prices[p.date] = p
+            
+        self.startdate = min([date for date,price in self.prices.iteritems()])    
     
-    
-    
-    def getVar(self, rates=[], startdate=None, ratemethod="Log", annualized=False):
+    def getVar(self, rates={}, startdate=None, ratemethod="Log", annualized=False):
         if len(rates)==0:
             rates = self.getRatesOfReturn(startdate, ratemethod)
-        var = num.var(rates)
+        var = num.var(rates.itervalues())
         if annualized:
             var = var*252
         return var
         
-    def getStd(self, rates=[], startdate=None, ratemethod="Log", annualized=False):
+    def getStd(self, rates={}, startdate=None, ratemethod="Log", annualized=False):
         if startdate==None:
             startdate = self.startdate
         if len(rates)==0:
             rates = self.getRatesOfReturn(startdate, ratemethod)
             
-        std = num.std(rates)
+        std = num.std(rates.itervalues())
         if annualized:
             std = num.sqrt(252)*std
         return std
      
         
-    def getMeanROR(self,rates=[],startdate=None, ratemethod="Log", annualized=False):
+    def getMeanROR(self,rates={},startdate=None, ratemethod="Log", annualized=False):
         if startdate==None:
             startdate = self.startdate
         if len(rates)==0:
             rates = self.getRatesOfReturn(startdate, ratemethod)
         
-        meanROR = num.mean(rates)
+        meanROR = num.mean(rates.itervalues())
         if annualized:
             meanROR = meanROR*252
         return meanROR
@@ -75,19 +77,21 @@ class Asset:
         if startdate==None:
             startdate = self.startdate
         prices = self.prices
-        prices = [float(price.adjclosing) for price in prices if price.date >= startdate]
-        prices.reverse()
-        rates = []
-        for i in range(len(prices)):
-            if i != 0:
-                d1 = prices[i]
-                d2 = prices[i-1]
+#        prices = [float(prices[date].adjclosing) for date in u.date_range(startdate) if date in prices.keys()]
+        
+        dates = [d for d in u.date_range(startdate) if d in prices.keys()]
+        
+        rates = {}
+        for i in range(len(dates)):
+            if i != 0:    
+                d1 = prices[dates[i]].adjclosing
+                d2 = prices[dates[i-1]].adjclosing
                 if method=="Log":
                     if d1 != 0.00 and d2 != 0.00:
-                        rates.append(num.log(d1)-num.log(d2))
+                        rates[dates[i]] = num.log(d1)-num.log(d2)
                 elif method=="Simple":
                     if d2 != 0.00:
-                        rates.append((d1-d2)/d2)
+                        rates[dates[i]] = (d1-d2)/d2
         return rates
     
 class AssetPrice:

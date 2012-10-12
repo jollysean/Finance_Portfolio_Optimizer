@@ -14,7 +14,15 @@ def getHistoricalPrices(stockSymbol):
 	dReader = csv.DictReader(sIO(prices))
 	histPrices = [fin.AssetPrice(dt.datetime.strptime(row['Date'], dateFormat).date(), row['Open'], row['High'], row['Low'], row['Close'], row['Volume'], row['Adj Close']) for row in dReader]
 	return histPrices
-			
+def getHistoricalRates(indexSymbol):
+	req = urllib2.urlopen(source+indexSymbol)
+	rates = req.read()
+	dReader = csv.DictReader(sIO(rates))
+	histRates = {}
+	for row in dReader:
+		histRates[dt.datetime.strptime(row['Date'], dateFormat)] = float(row['Adj Close'])/100.0
+	return histRates
+
 def createDateSuffix(day, month, year):
 	suff = '&a='
 	suff += str(month - 1)
@@ -24,7 +32,16 @@ def createDateSuffix(day, month, year):
 	suff += str(year)
 	return suff
 
+def date_range(start, end=dt.date.today()):
+	r = (end+dt.timedelta(days=1)-start).days
+	return [start+dt.timedelta(days=i) for i in range(r)]
 
+
+def datetimeIterator(from_date=dt.datetime.now(), to_date=None):
+	while to_date is None or from_date <= to_date:
+		yield from_date
+		from_date = from_date + dt.timedelta(days = 1)
+	return
 
 
 	

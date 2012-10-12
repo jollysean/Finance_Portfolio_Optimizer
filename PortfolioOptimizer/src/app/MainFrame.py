@@ -11,6 +11,7 @@ import matplotlib.backends.backend_wxagg as mpl
 import time
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
 import matplotlib.pyplot as plt
+import operator
 
 # Implementing MainFrameBase
 class MainFrame( gui.MainFrameBase ):
@@ -30,7 +31,10 @@ class MainFrame( gui.MainFrameBase ):
 			if s.symbol == sym:
 				stock = s
 				break
-		prices = [(p.date, p.adjclosing) for p in stock.prices if p.date >= self.portfolio.startdate]
+		prices = [(date, price.adjclosing) for date,price in stock.prices.iteritems() if date >= self.portfolio.startdate]
+		
+		sorted(prices[:1], key=operator.itemgetter(0), reverse=True)
+		
 		data = zip(*prices)
 		
 		plt.figure(1)
@@ -96,12 +100,32 @@ class MainFrame( gui.MainFrameBase ):
 			self.m_stocklist.InsertColumn(1, "Mean Rate")
 			self.m_stocklist.InsertColumn(2, "Std. Deviation", width=120)
 			self.m_stocklist.InsertColumn(3, "Allocation")
-			
-			
+			self.m_stocklist.InsertColumn(4, "Correlation")
+			self.m_stocklist.InsertColumn(5, "Beta")
+			self.m_stocklist.InsertColumn(6, "Sharpe Ratio")
+		
+		MRAprices = u.getHistoricalPrices("SPY")
+		marketRetAsset = fin.Asset("SPY", MRAprices)
+		rfr = self.m_rfRadBox.getStringSelection()
+		
+		rfRates = u.getHistoricalRates(rfr)
+		mrRates = marketRetAsset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
+		dates = u.date_range(self.portfolio.startdate)
+		
+				
 		for asset in self.portfolio.assets:
 			rates = asset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
 			annmean = 100 * asset.getMeanROR(rates, annualized=True)
 			annstd = 100 * asset.getStd(rates, annualized=True)
+			
+			rateBundle = []
+			
+			for d in dates:
+				if d in rfRates.keys() and d in mrRates.keys() and d in rates.keys():
+					rateBundle.append((rates[d],rfRates[d],mrRates[d]))
+			
+			
+			
 			pos = self.m_stocklist.FindItem(-1, asset.symbol)	
 			if pos ==-1:
 				pos = self.m_stocklist.ItemCount
@@ -137,7 +161,7 @@ class MainFrame( gui.MainFrameBase ):
 	def rfrChanged( self, event ):
 		pass
 	
-	def stdMethChanged( self, event ):
+	def meanCalcMethChanged( self, event ):
 		method = self.m_meanCalcRadBox.GetStringSelection()
 		if method != "Simple":
 			method = "Log"
