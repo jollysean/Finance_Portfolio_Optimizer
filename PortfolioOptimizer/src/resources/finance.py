@@ -68,8 +68,39 @@ class Asset:
             meanROR = meanROR*252
         return meanROR
     
-    def getBeta(self, startdate=None, method=""):
-        pass
+    def getCorrelation(self, rates):
+        assetrr = []
+        marketrr = []
+        assetrates, rfrates, marketrates = zip(*rates)
+        for rate in rates:
+            assetrr.append(rate[0]-rate[1])
+            marketrr.append(rate[2]-rate[1])
+        meanassetrr = num.mean(assetrr)
+        meanmarketrr = num.mean(marketrr)
+        stdr = num.std(rfrates)
+        stdm = num.std(marketrates)
+        covariance = 0
+        for rate in rates:
+            covariance = covariance + (rate[0]-rate[1]-meanassetrr)*(rate[2]-rate[1]-meanmarketrr)
+        correlation = covariance/(len(rates)*stdr*stdm)
+        return correlation
+            
+        
+    def getBeta(self, rates):
+        correlation = self.getCorrelation(rates)
+        assetrates, rfrates, marketrates = zip(*rates)
+        stdasset = num.std(assetrates)
+        stdmarket = num.std(marketrates)
+        beta = correlation * (stdasset/stdmarket)
+        return beta
+    
+    def getSharpe(self, rates):
+        assetrates, rfrates, marketrates = zip(*rates)
+        meanasset = num.mean(assetrates)
+        meanrf = num.mean(rfrates)
+        stdasset = num.std(assetrates)
+        sharpe = (meanasset-meanrf)/stdasset
+        return sharpe
     
     def getRatesOfReturn(self, startdate=None, method="Log"):
         if startdate==None:
