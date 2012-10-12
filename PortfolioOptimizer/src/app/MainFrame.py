@@ -11,7 +11,7 @@ import matplotlib.backends.backend_wxagg as mpl
 import time
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
 import matplotlib.pyplot as plt
-import operator
+from operator import itemgetter
 
 # Implementing MainFrameBase
 class MainFrame( gui.MainFrameBase ):
@@ -33,7 +33,7 @@ class MainFrame( gui.MainFrameBase ):
 				break
 		prices = [(date, price.adjclosing) for date,price in stock.prices.iteritems() if date >= self.portfolio.startdate]
 		
-		sorted(prices[:1], key=operator.itemgetter(0), reverse=True)
+		prices = sorted(prices, key=itemgetter(0), reverse=True)
 		
 		data = zip(*prices)
 		
@@ -105,46 +105,47 @@ class MainFrame( gui.MainFrameBase ):
 			self.m_stocklist.InsertColumn(5, "Beta")
 			self.m_stocklist.InsertColumn(6, "Sharpe Ratio")
 		
-		MRAprices = u.getHistoricalPrices("SPY")
-		marketRetAsset = fin.Asset("SPY", MRAprices)
-		rfr = self.m_rfRadBox.GetStringSelection()
-		
-		rfRates = u.getHistoricalRates(rfr)
-		mrRates = marketRetAsset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
-		dates = u.date_range(self.portfolio.startdate)
-		
+		if len(self.portfolio.assets) != 0:	
+			MRAprices = u.getHistoricalPrices("SPY")
+			marketRetAsset = fin.Asset("SPY", MRAprices)
+			rfr = self.m_rfRadBox.GetStringSelection()
+			
+			rfRates = u.getHistoricalRates(rfr)
+			mrRates = marketRetAsset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
+			dates = u.date_range(self.portfolio.startdate)
+			
+					
+			for asset in self.portfolio.assets:
+				rates = asset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
+				annmean = 100 * asset.getMeanROR(rates, annualized=True)
+				annstd = 100 * asset.getStd(rates, annualized=True)
+				rateBundle = []
+				for d in dates:
+					if d in rfRates.keys() and d in mrRates.keys() and d in rates.keys():
+						rateBundle.append((rates[d],rfRates[d],mrRates[d]))
 				
-		for asset in self.portfolio.assets:
-			rates = asset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
-			annmean = 100 * asset.getMeanROR(rates, annualized=True)
-			annstd = 100 * asset.getStd(rates, annualized=True)
-			rateBundle = []
-			for d in dates:
-				if d in rfRates.keys() and d in mrRates.keys() and d in rates.keys():
-					rateBundle.append((rates[d],rfRates[d],mrRates[d]))
-			
-			correlation = asset.getCorrelation(rateBundle)
-			beta = asset.getBeta(rateBundle, correlation)
-			sharpe = asset.getSharpe(rateBundle)
-
-			
-			pos = self.m_stocklist.FindItem(-1, asset.symbol)	
-			if pos ==-1:
-				pos = self.m_stocklist.ItemCount
-				self.m_stocklist.InsertStringItem(pos, asset.symbol)
-				self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean)+"%")
-				self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd)+"%")
-				self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
-				self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
-				self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
-				self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
-			else:
-				self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean)+"%")
-				self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd)+"%")
-				self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
-				self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
-				self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
-				self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
+				correlation = asset.getCorrelation(rateBundle)
+				beta = asset.getBeta(rateBundle, correlation)
+				sharpe = asset.getSharpe(rateBundle)
+	
+				
+				pos = self.m_stocklist.FindItem(-1, asset.symbol)	
+				if pos ==-1:
+					pos = self.m_stocklist.ItemCount
+					self.m_stocklist.InsertStringItem(pos, asset.symbol)
+					self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean)+"%")
+					self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd)+"%")
+					self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
+					self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
+					self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
+					self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
+				else:
+					self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean)+"%")
+					self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd)+"%")
+					self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
+					self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
+					self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
+					self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
 			
 	def removeSelClicked( self, event ):
 		sel = self.m_stocklist.GetFirstSelected()
