@@ -14,6 +14,7 @@ def getHistoricalPrices(stockSymbol):
 	dReader = csv.DictReader(sIO(prices))
 	histPrices = [fin.AssetPrice(dt.datetime.strptime(row['Date'], dateFormat).date(), row['Open'], row['High'], row['Low'], row['Close'], row['Volume'], row['Adj Close']) for row in dReader]
 	return histPrices
+
 def getHistoricalRates(indexSymbol):
 	req = urllib2.urlopen(source+indexSymbol)
 	rates = req.read()
