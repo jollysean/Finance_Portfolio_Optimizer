@@ -107,7 +107,7 @@ class Asset:
         meanasset = num.mean(assetrates)
         meanrf = num.mean(rfrates)
         stdasset = num.std(assetrates)
-        sharpe = (meanasset-meanrf)/stdasset
+        sharpe = (252/num.sqrt(252))*(meanasset-meanrf)/stdasset
         return sharpe
     
     def getRatesOfReturn(self, startdate=None, method="Log"):
