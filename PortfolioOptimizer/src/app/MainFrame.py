@@ -69,9 +69,11 @@ class MainFrame( gui.MainFrameBase ):
 		stock with the most recent startdate
 		"""
 		dates = [stock.startdate for stock in self.portfolio.assets]
+		
 		dateWidgetValue = cal._wxdate2pydate(self.m_startingdate.GetValue())
 		dates.append(dateWidgetValue)
 		maxdate = max(dates)
+
 		if not maxdate == dateWidgetValue:
 			for stock in self.portfolio.assets:
 				if stock.startdate == maxdate:
@@ -80,16 +82,15 @@ class MainFrame( gui.MainFrameBase ):
 					wx.MessageBox(message, 'Info', wx.OK | wx.ICON_INFORMATION)
 				
 			self.m_startingdate.SetValue(cal._pydate2wxdate(maxdate))
-			self.portfolio.startdate = maxdate
+		self.portfolio.startdate = maxdate
 		
 		if self.m_meanCalcRadBox.GetStringSelection()=="Simple":
 			self.portfolio.ratemethod = "Simple"
 		else:
 			self.portfolio.ratemethod = "Log"
-		
 		for asset in self.portfolio.assets:
 			asset.rates = asset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
-		
+			
 		self.calculateGrid()
 		
 	def calculateGrid(self):
@@ -106,7 +107,7 @@ class MainFrame( gui.MainFrameBase ):
 		
 		MRAprices = u.getHistoricalPrices("SPY")
 		marketRetAsset = fin.Asset("SPY", MRAprices)
-		rfr = self.m_rfRadBox.getStringSelection()
+		rfr = self.m_rfRadBox.GetStringSelection()
 		
 		rfRates = u.getHistoricalRates(rfr)
 		mrRates = marketRetAsset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
@@ -117,15 +118,16 @@ class MainFrame( gui.MainFrameBase ):
 			rates = asset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
 			annmean = 100 * asset.getMeanROR(rates, annualized=True)
 			annstd = 100 * asset.getStd(rates, annualized=True)
-			
 			rateBundle = []
 			for d in dates:
 				if d in rfRates.keys() and d in mrRates.keys() and d in rates.keys():
 					rateBundle.append((rates[d],rfRates[d],mrRates[d]))
 			
+			print rateBundle
 			correlation = asset.getCorrelation(rateBundle)
 			beta = asset.getBeta(rateBundle, correlation)
 			sharpe = asset.getSharpe(rateBundle)
+
 			
 			pos = self.m_stocklist.FindItem(-1, asset.symbol)	
 			if pos ==-1:

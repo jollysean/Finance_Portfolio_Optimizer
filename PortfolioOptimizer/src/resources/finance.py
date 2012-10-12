@@ -42,7 +42,9 @@ class Asset:
     def getVar(self, rates={}, startdate=None, ratemethod="Log", annualized=False):
         if len(rates)==0:
             rates = self.getRatesOfReturn(startdate, ratemethod)
-        var = num.var(rates.itervalues())
+        if type(rates) is dict:
+            rates = [float(rate) for rate in rates.itervalues()]
+        var = num.var(rates)
         if annualized:
             var = var*252
         return var
@@ -52,8 +54,9 @@ class Asset:
             startdate = self.startdate
         if len(rates)==0:
             rates = self.getRatesOfReturn(startdate, ratemethod)
-            
-        std = num.std(rates.itervalues())
+        if type(rates) is dict:
+            rates = [float(rate) for rate in rates.itervalues()]
+        std = num.std(rates)
         if annualized:
             std = num.sqrt(252)*std
         return std
@@ -64,8 +67,9 @@ class Asset:
             startdate = self.startdate
         if len(rates)==0:
             rates = self.getRatesOfReturn(startdate, ratemethod)
-        
-        meanROR = num.mean(rates.itervalues())
+        if type(rates) is dict:
+            rates = [float(rate) for rate in rates.itervalues()]
+        meanROR = num.mean(rates)
         if annualized:
             meanROR = meanROR*252
         return meanROR
@@ -79,12 +83,12 @@ class Asset:
             marketrr.append(rate[2]-rate[1])
         meanassetrr = num.mean(assetrr)
         meanmarketrr = num.mean(marketrr)
-        stdr = num.std(rfrates)
+        stda = num.std(rates)
         stdm = num.std(marketrates)
-        covariance = 0
+        covariance=0
         for rate in rates:
             covariance = covariance + (rate[0]-rate[1]-meanassetrr)*(rate[2]-rate[1]-meanmarketrr)
-        correlation = covariance/(len(rates)*stdr*stdm)
+        correlation = covariance/(len(rates)*stda*stdm)
         return correlation
             
         
@@ -100,20 +104,24 @@ class Asset:
     
     def getSharpe(self, rates):
         assetrates, rfrates, marketrates = zip(*rates)
+        assetrr=[]
+        for rate in rates:
+            assetrr.append(rate[0]-rate[1])
+        meanassetrr = num.mean(assetrr)
+        stdassetrr = num.std(assetrr)
         meanasset = num.mean(assetrates)
         meanrf = num.mean(rfrates)
         stdasset = num.std(assetrates)
-        sharpe = (meanasset-meanrf)/stdasset
+        sharpe = meanassetrr/stdassetrr
         return sharpe
     
     def getRatesOfReturn(self, startdate=None, method="Log"):
         if startdate==None:
             startdate = self.startdate
         prices = self.prices
-#        prices = [float(prices[date].adjclosing) for date in u.date_range(startdate) if date in prices.keys()]
-        
+#        prices = [float(prices[date].adjclosing) for date in u.date_range(startdate) if date in prices.keys()])
         dates = [d for d in u.date_range(startdate) if d in prices.keys()]
-        
+
         rates = {}
         for i in range(len(dates)):
             if i != 0:    

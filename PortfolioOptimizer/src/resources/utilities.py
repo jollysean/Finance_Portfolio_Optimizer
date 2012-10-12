@@ -21,7 +21,7 @@ def getHistoricalRates(indexSymbol):
 	dReader = csv.DictReader(sIO(rates))
 	histRates = {}
 	for row in dReader:
-		histRates[dt.datetime.strptime(row['Date'], dateFormat)] = float(row['Adj Close'])/100.0
+		histRates[dt.datetime.strptime(row['Date'], dateFormat).date()] = (float(row['Adj Close'])/100.0)/365
 	return histRates
 
 def createDateSuffix(day, month, year):
