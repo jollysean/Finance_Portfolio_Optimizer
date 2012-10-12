@@ -123,7 +123,6 @@ class MainFrame( gui.MainFrameBase ):
 				if d in rfRates.keys() and d in mrRates.keys() and d in rates.keys():
 					rateBundle.append((rates[d],rfRates[d],mrRates[d]))
 			
-			print rateBundle
 			correlation = asset.getCorrelation(rateBundle)
 			beta = asset.getBeta(rateBundle, correlation)
 			sharpe = asset.getSharpe(rateBundle)

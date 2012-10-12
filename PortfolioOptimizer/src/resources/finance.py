@@ -83,7 +83,7 @@ class Asset:
             marketrr.append(rate[2]-rate[1])
         meanassetrr = num.mean(assetrr)
         meanmarketrr = num.mean(marketrr)
-        stda = num.std(rates)
+        stda = num.std(assetrates)
         stdm = num.std(marketrates)
         covariance=0
         for rate in rates:
@@ -107,12 +107,10 @@ class Asset:
         assetrr=[]
         for rate in rates:
             assetrr.append(rate[0]-rate[1])
-        meanassetrr = num.mean(assetrr)
-        stdassetrr = num.std(assetrr)
         meanasset = num.mean(assetrates)
         meanrf = num.mean(rfrates)
         stdasset = num.std(assetrates)
-        sharpe = meanassetrr/stdassetrr
+        sharpe = (meanasset-meanrf)/stdasset
         return sharpe
     
     def getRatesOfReturn(self, startdate=None, method="Log"):
