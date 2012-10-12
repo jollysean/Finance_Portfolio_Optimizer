@@ -104,9 +104,6 @@ class Asset:
     
     def getSharpe(self, rates):
         assetrates, rfrates, marketrates = zip(*rates)
-        assetrr=[]
-        for rate in rates:
-            assetrr.append(rate[0]-rate[1])
         meanasset = num.mean(assetrates)
         meanrf = num.mean(rfrates)
         stdasset = num.std(assetrates)
