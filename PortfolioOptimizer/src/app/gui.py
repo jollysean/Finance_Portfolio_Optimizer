@@ -80,14 +80,14 @@ class MainFrameBase ( wx.Frame ):
 		
 		bSizer91 = wx.BoxSizer( wx.HORIZONTAL )
 		
-		m_rfRadBoxChoices = [ u"^IRX", u"^TXN" ]
+		m_rfRadBoxChoices = [ u"^IRX", u"^TNX" ]
 		self.m_rfRadBox = wx.RadioBox( self.m_panel, wx.ID_ANY, u"Risk Free Rate", wx.DefaultPosition, wx.DefaultSize, m_rfRadBoxChoices, 1, wx.RA_SPECIFY_ROWS )
-		self.m_rfRadBox.SetSelection( 0 )
+		self.m_rfRadBox.SetSelection( 1 )
 		bSizer91.Add( self.m_rfRadBox, 0, wx.ALL, 5 )
 		
 		m_meanCalcRadBoxChoices = [ u"Log Normal", u"Simple" ]
 		self.m_meanCalcRadBox = wx.RadioBox( self.m_panel, wx.ID_ANY, u"Mean Calculation Method", wx.DefaultPosition, wx.DefaultSize, m_meanCalcRadBoxChoices, 1, wx.RA_SPECIFY_ROWS )
-		self.m_meanCalcRadBox.SetSelection( 1 )
+		self.m_meanCalcRadBox.SetSelection( 0 )
 		bSizer91.Add( self.m_meanCalcRadBox, 0, wx.ALL, 5 )
 		
 		self.m_clearSelButton = wx.Button( self.m_panel, wx.ID_ANY, u"Remove Selected", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -126,7 +126,7 @@ class MainFrameBase ( wx.Frame ):
 		self.m_addbutton.Bind( wx.EVT_BUTTON, self.m_addButtonClick )
 		self.m_stocklist.Bind( wx.EVT_LIST_ITEM_ACTIVATED, self.stockSelected )
 		self.m_rfRadBox.Bind( wx.EVT_RADIOBOX, self.rfrChanged )
-		self.m_meanCalcRadBox.Bind( wx.EVT_RADIOBOX, self.stdMethChanged )
+		self.m_meanCalcRadBox.Bind( wx.EVT_RADIOBOX, self.meanCalcMethChanged )
 		self.m_clearSelButton.Bind( wx.EVT_BUTTON, self.removeSelClicked )
 		self.m_clearAllButton.Bind( wx.EVT_BUTTON, self.removeAllClicked )
 		self.Bind( wx.EVT_MENU, self.m_mniExitClick, id = m_mniExitId )
@@ -148,7 +148,7 @@ class MainFrameBase ( wx.Frame ):
 	def rfrChanged( self, event ):
 		event.Skip()
 	
-	def stdMethChanged( self, event ):
+	def meanCalcMethChanged( self, event ):
 		event.Skip()
 	
 	def removeSelClicked( self, event ):

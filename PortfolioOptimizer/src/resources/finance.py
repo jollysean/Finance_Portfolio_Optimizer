@@ -88,8 +88,10 @@ class Asset:
         return correlation
             
         
-    def getBeta(self, rates):
-        correlation = self.getCorrelation(rates)
+    def getBeta(self, rates, correlation=None):
+        if correlation == None:
+            correlation = self.getCorrelation(rates)
+        
         assetrates, rfrates, marketrates = zip(*rates)
         stdasset = num.std(assetrates)
         stdmarket = num.std(marketrates)
@@ -115,8 +117,8 @@ class Asset:
         rates = {}
         for i in range(len(dates)):
             if i != 0:    
-                d1 = prices[dates[i]].adjclosing
-                d2 = prices[dates[i-1]].adjclosing
+                d1 = float(prices[dates[i]].adjclosing)
+                d2 = float(prices[dates[i-1]].adjclosing)
                 if method=="Log":
                     if d1 != 0.00 and d2 != 0.00:
                         rates[dates[i]] = num.log(d1)-num.log(d2)

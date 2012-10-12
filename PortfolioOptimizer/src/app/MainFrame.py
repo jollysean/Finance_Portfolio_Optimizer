@@ -119,12 +119,13 @@ class MainFrame( gui.MainFrameBase ):
 			annstd = 100 * asset.getStd(rates, annualized=True)
 			
 			rateBundle = []
-			
 			for d in dates:
 				if d in rfRates.keys() and d in mrRates.keys() and d in rates.keys():
 					rateBundle.append((rates[d],rfRates[d],mrRates[d]))
 			
-			
+			correlation = asset.getCorrelation(rateBundle)
+			beta = asset.getBeta(rateBundle, correlation)
+			sharpe = asset.getSharpe(rateBundle)
 			
 			pos = self.m_stocklist.FindItem(-1, asset.symbol)	
 			if pos ==-1:
@@ -133,11 +134,17 @@ class MainFrame( gui.MainFrameBase ):
 				self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean)+"%")
 				self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd)+"%")
 				self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
+				self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
+				self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
+				self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
 			else:
 				self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean)+"%")
 				self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd)+"%")
 				self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
-				
+				self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
+				self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
+				self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
+			
 	def removeSelClicked( self, event ):
 		sel = self.m_stocklist.GetFirstSelected()
 		if not sel == -1:
