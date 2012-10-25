@@ -27,8 +27,21 @@ class Portfolio(object):
         for asset in self.assets:
             annstd = asset.getStd(startdate=self.startdate, ratemethod=self.ratemethod, annualized=True)
             allocations[asset.symbol] = (1/annstd)/totalstd
-        return allocations
-
+        return allocations  
+    
+    def getCovarianceMatrix(self,rates):  
+        A = num.empty(shape = (len(rates[0]),0))
+        for raterow in rates:
+            assetrates, rfrates, marketrates = zip(*raterow)
+            excessrates = num.array(assetrates).T
+            A = num.c_[A,excessrates]
+        print A
+        C = num.dot(A.T,A)
+        print C
+        return C
+                
+                
+    
 class Asset:
     """Represents an asset"""
     def __init__(self, symbol, prices):
@@ -37,7 +50,8 @@ class Asset:
         for p in prices:
             self.prices[p.date] = p
             
-        self.startdate = min([date for date,price in self.prices.iteritems()])    
+        self.startdate = min([date for date,price in self.prices.iteritems()]) 
+        self.rates = self.getRatesOfReturn   
     
     def getVar(self, rates={}, startdate=None, ratemethod="Log", annualized=False):
         if len(rates)==0:
@@ -129,6 +143,7 @@ class Asset:
                     if d2 != 0.00:
                         rates[dates[i]] = (d1-d2)/d2
         return rates
+    
     
 class AssetPrice:
     """Represents the price of an asset on a given day"""

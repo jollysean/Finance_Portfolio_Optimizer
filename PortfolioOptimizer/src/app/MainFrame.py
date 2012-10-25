@@ -114,6 +114,7 @@ class MainFrame( gui.MainFrameBase ):
 			mrRates = marketRetAsset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
 			dates = u.date_range(self.portfolio.startdate)
 			
+			ratesmatrix = []
 					
 			for asset in self.portfolio.assets:
 				rates = asset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
@@ -127,7 +128,8 @@ class MainFrame( gui.MainFrameBase ):
 				correlation = asset.getCorrelation(rateBundle)
 				beta = asset.getBeta(rateBundle, correlation)
 				sharpe = asset.getSharpe(rateBundle)
-	
+				
+				ratesmatrix.append(rateBundle)
 				
 				pos = self.m_stocklist.FindItem(-1, asset.symbol)	
 				if pos ==-1:
@@ -146,6 +148,29 @@ class MainFrame( gui.MainFrameBase ):
 					self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
 					self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
 					self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
+
+#			correlation = asset.getCorrelation(rateBundle)
+#			beta = asset.getBeta(rateBundle, correlation)
+#			sharpe = asset.getSharpe(rateBundle)
+			cvmatrix = self.portfolio.getCovarianceMatrix(ratesmatrix)
+			
+			pos = self.m_stocklist.FindItem(-1, asset.symbol)	
+			if pos ==-1:
+				pos = self.m_stocklist.ItemCount
+				self.m_stocklist.InsertStringItem(pos, asset.symbol)
+				self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean)+"%")
+				self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd)+"%")
+				self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
+				self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
+				self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
+				self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
+			else:
+				self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean)+"%")
+				self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd)+"%")
+				self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
+				self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
+				self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
+				self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
 			
 	def removeSelClicked( self, event ):
 		sel = self.m_stocklist.GetFirstSelected()
