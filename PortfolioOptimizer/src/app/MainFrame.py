@@ -152,7 +152,7 @@ class MainFrame( gui.MainFrameBase ):
 #			correlation = asset.getCorrelation(rateBundle)
 #			beta = asset.getBeta(rateBundle, correlation)
 #			sharpe = asset.getSharpe(rateBundle)
-			cvmatrix = self.portfolio.getCovarianceMatrix(ratesmatrix)
+			cvmatrix = self.portfolio.getMatrix(ratesmatrix)
 			
 			pos = self.m_stocklist.FindItem(-1, asset.symbol)	
 			if pos ==-1:

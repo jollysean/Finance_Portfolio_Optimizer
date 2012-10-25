@@ -29,16 +29,43 @@ class Portfolio(object):
             allocations[asset.symbol] = (1/annstd)/totalstd
         return allocations  
     
-    def getCovarianceMatrix(self,rates):  
+    def getMatrix(self,rates,matrixtype="correlation"):  
         A = num.empty(shape = (len(rates[0]),0))
+        stdassetrr = []
         for raterow in rates:
             assetrates, rfrates, marketrates = zip(*raterow)
-            excessrates = num.array(assetrates).T
+            assetrr = []
+            for i in range(0,len(assetrates)):
+                assetrr.append(assetrates[i]-rfrates[i])
+            meanassetrr = num.mean(assetrr)
+            stdassetrr.append(num.std(assetrr))
+            excessrr = [rr-meanassetrr for rr in assetrr]
+            excessrates = num.array(excessrr).T
             A = num.c_[A,excessrates]
+        assetrates, rfrates, marketrates = zip(*rates[0])
+        marketrr =[]
+        for i in range(0,len(assetrates)):
+            marketrr.append(marketrates[i]-rfrates[i])
+        meanmarketrr = num.mean(marketrr)
+        stdmarketrr = num.std(marketrr)
+        excessmrr = [rr-meanmarketrr for rr in marketrr]
+        excessmrates = num.array(excessmrr).T
+        A = num.c_[A,excessmrates]
         print A
-        C = num.dot(A.T,A)
+        C = num.dot(A.T,A)/len(rates[0])
         print C
-        return C
+        if matrixtype == "covariance":
+            return C
+        stdassetrr.append(stdmarketrr)
+        B = num.empty(shape = (len(rates)+1, len(rates)+1))
+        for i in range(0,len(stdassetrr)):
+            for j in range(0,len(stdassetrr)):
+                B[i,j] = stdassetrr[i]*stdassetrr[j]
+        P = C/B
+        print P
+        if matrixtype == "correlation":
+            return P
+        
                 
                 
     
@@ -55,7 +82,7 @@ class Asset:
     
     def getVar(self, rates={}, startdate=None, ratemethod="Log", annualized=False):
         if len(rates)==0:
-            rates = self.getRatesOfReturn(startdate, ratemethod)
+            rates = self.rates
         if type(rates) is dict:
             rates = [float(rate) for rate in rates.itervalues()]
         var = num.var(rates)
@@ -67,7 +94,7 @@ class Asset:
         if startdate==None:
             startdate = self.startdate
         if len(rates)==0:
-            rates = self.getRatesOfReturn(startdate, ratemethod)
+            rates = self.rates
         if type(rates) is dict:
             rates = [float(rate) for rate in rates.itervalues()]
         std = num.std(rates)
@@ -80,7 +107,7 @@ class Asset:
         if startdate==None:
             startdate = self.startdate
         if len(rates)==0:
-            rates = self.getRatesOfReturn(startdate, ratemethod)
+            rates = self.rates
         if type(rates) is dict:
             rates = [float(rate) for rate in rates.itervalues()]
         meanROR = num.mean(rates)
