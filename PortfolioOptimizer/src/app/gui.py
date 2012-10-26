@@ -8,6 +8,7 @@
 ###########################################################################
 
 import wx
+import wx.grid
 
 m_mniExitId = 1000
 
@@ -73,8 +74,52 @@ class MainFrameBase ( wx.Frame ):
 		
 		bSizer13 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_stocklist = wx.ListCtrl( self.m_panel, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LC_REPORT|wx.LC_SINGLE_SEL )
-		bSizer13.Add( self.m_stocklist, 3, wx.ALL|wx.EXPAND, 5 )
+		self.m_notebook4 = wx.Notebook( self.m_panel, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.NB_TOP )
+		self.m_panel41 = wx.Panel( self.m_notebook4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
+		bSizer131 = wx.BoxSizer( wx.VERTICAL )
+		
+		self.m_stocklist = wx.ListCtrl( self.m_panel41, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LC_REPORT|wx.LC_SINGLE_SEL )
+		bSizer131.Add( self.m_stocklist, 3, wx.ALL|wx.EXPAND, 5 )
+		
+		self.m_panel41.SetSizer( bSizer131 )
+		self.m_panel41.Layout()
+		bSizer131.Fit( self.m_panel41 )
+		self.m_notebook4.AddPage( self.m_panel41, u"Risk Summary", True )
+		self.m_panel6 = wx.Panel( self.m_notebook4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
+		bSizer17 = wx.BoxSizer( wx.VERTICAL )
+		
+		self.m_corgrid = wx.grid.Grid( self.m_panel6, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0 )
+		
+		# Grid
+		self.m_corgrid.CreateGrid( 0, 0 )
+		self.m_corgrid.EnableEditing( False )
+		self.m_corgrid.EnableGridLines( True )
+		self.m_corgrid.EnableDragGridSize( False )
+		self.m_corgrid.SetMargins( 0, 0 )
+		
+		# Columns
+		self.m_corgrid.EnableDragColMove( False )
+		self.m_corgrid.EnableDragColSize( True )
+		self.m_corgrid.SetColLabelSize( 30 )
+		self.m_corgrid.SetColLabelAlignment( wx.ALIGN_CENTRE, wx.ALIGN_CENTRE )
+		
+		# Rows
+		self.m_corgrid.EnableDragRowSize( True )
+		self.m_corgrid.SetRowLabelSize( 80 )
+		self.m_corgrid.SetRowLabelAlignment( wx.ALIGN_CENTRE, wx.ALIGN_CENTRE )
+		
+		# Label Appearance
+		
+		# Cell Defaults
+		self.m_corgrid.SetDefaultCellAlignment( wx.ALIGN_LEFT, wx.ALIGN_TOP )
+		bSizer17.Add( self.m_corgrid, 1, wx.ALL|wx.EXPAND, 5 )
+		
+		self.m_panel6.SetSizer( bSizer17 )
+		self.m_panel6.Layout()
+		bSizer17.Fit( self.m_panel6 )
+		self.m_notebook4.AddPage( self.m_panel6, u"Correlations", False )
+		
+		bSizer13.Add( self.m_notebook4, 1, wx.EXPAND |wx.ALL, 5 )
 		
 		bSizer9.Add( bSizer13, 1, wx.EXPAND, 5 )
 		
@@ -82,7 +127,7 @@ class MainFrameBase ( wx.Frame ):
 		
 		m_rfRadBoxChoices = [ u"^IRX", u"^TNX" ]
 		self.m_rfRadBox = wx.RadioBox( self.m_panel, wx.ID_ANY, u"Risk Free Rate", wx.DefaultPosition, wx.DefaultSize, m_rfRadBoxChoices, 1, wx.RA_SPECIFY_ROWS )
-		self.m_rfRadBox.SetSelection( 1 )
+		self.m_rfRadBox.SetSelection( 0 )
 		bSizer91.Add( self.m_rfRadBox, 0, wx.ALL, 5 )
 		
 		m_meanCalcRadBoxChoices = [ u"Log Normal", u"Simple" ]

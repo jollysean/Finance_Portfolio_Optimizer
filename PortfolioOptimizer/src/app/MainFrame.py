@@ -149,29 +149,28 @@ class MainFrame( gui.MainFrameBase ):
 					self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
 					self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
 
-#			correlation = asset.getCorrelation(rateBundle)
-#			beta = asset.getBeta(rateBundle, correlation)
-#			sharpe = asset.getSharpe(rateBundle)
 			cvmatrix = self.portfolio.getMatrix(ratesmatrix)
+			assets = []
+			assets.extend(self.portfolio.assets)
+			assets.append(marketRetAsset)
+			grid = self.m_corgrid
+			grid.ClearGrid()
+			while self.m_corgrid.NumberRows != 0:
+				self.m_corgrid.DeleteCols()
+				self.m_corgrid.DeleteRows()
+
+			grid.AppendCols(len(assets))
+			grid.AppendRows(len(assets))
+			i = 0
+			for asset in assets:
+				self.m_corgrid.SetRowLabelValue(i, asset.symbol)
+				self.m_corgrid.SetColLabelValue(i, asset.symbol)
+				i = i+1
+			for i in range(len(assets)):
+				for j in range(len(assets)):
+					self.m_corgrid.SetCellValue(i, j, str("%.2f" % cvmatrix[i][j]))
 			
-			pos = self.m_stocklist.FindItem(-1, asset.symbol)	
-			if pos ==-1:
-				pos = self.m_stocklist.ItemCount
-				self.m_stocklist.InsertStringItem(pos, asset.symbol)
-				self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean)+"%")
-				self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd)+"%")
-				self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
-				self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
-				self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
-				self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
-			else:
-				self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean)+"%")
-				self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd)+"%")
-				self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
-				self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
-				self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
-				self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
-			
+
 	def removeSelClicked( self, event ):
 		sel = self.m_stocklist.GetFirstSelected()
 		if not sel == -1:
@@ -190,6 +189,10 @@ class MainFrame( gui.MainFrameBase ):
 		del self.portfolio.assets
 		self.portfolio.assets = []
 		self.m_stocklist.DeleteAllItems()
+		self.m_corgrid.ClearGrid()
+		while self.m_corgrid.NumberRows != 0:
+			self.m_corgrid.DeleteCols()
+			self.m_corgrid.DeleteRows()
 		self.calculateGrid()
 		
 	def rfrChanged( self, event ):
