@@ -19,7 +19,7 @@ m_mniExitId = 1000
 class MainFrameBase ( wx.Frame ):
 	
 	def __init__( self, parent ):
-		wx.Frame.__init__  ( self, parent, id = wx.ID_ANY, title = u"Portfolio Optimizer", pos = wx.DefaultPosition, size = wx.Size( 600,400 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__  ( self, parent, id = wx.ID_ANY, title = u"Portfolio Optimizer", pos = wx.DefaultPosition, size = wx.Size( 600,600 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
@@ -80,7 +80,12 @@ class MainFrameBase ( wx.Frame ):
 		self.m_panel41 = wx.Panel( self.m_notebook4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer131 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_stocklist = wx.ListCtrl( self.m_panel41, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LC_REPORT|wx.LC_SINGLE_SEL )
+		self.m_portfoliolist = wx.ListCtrl( self.m_panel41, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LC_HRULES|wx.LC_REPORT|wx.LC_VRULES )
+		self.m_portfoliolist.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
+		
+		bSizer131.Add( self.m_portfoliolist, 0, wx.ALL|wx.EXPAND, 5 )
+		
+		self.m_stocklist = wx.ListCtrl( self.m_panel41, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LC_HRULES|wx.LC_NO_HEADER|wx.LC_NO_SORT_HEADER|wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.LC_VRULES )
 		bSizer131.Add( self.m_stocklist, 3, wx.ALL|wx.EXPAND, 5 )
 		
 		self.m_panel41.SetSizer( bSizer131 )
@@ -120,8 +125,6 @@ class MainFrameBase ( wx.Frame ):
 		self.m_panel6.Layout()
 		bSizer17.Fit( self.m_panel6 )
 		self.m_notebook4.AddPage( self.m_panel6, u"Correlations", False )
-		self.m_panel5 = wx.Panel( self.m_notebook4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
-		self.m_notebook4.AddPage( self.m_panel5, u"Backtest Statistics", False )
 		
 		bSizer13.Add( self.m_notebook4, 1, wx.EXPAND |wx.ALL, 5 )
 		
@@ -196,6 +199,7 @@ class MainFrameBase ( wx.Frame ):
 		self.m_addbutton.Bind( wx.EVT_BUTTON, self.m_addButtonClick )
 		self.m_clearSelButton.Bind( wx.EVT_BUTTON, self.removeSelClicked )
 		self.m_clearAllButton.Bind( wx.EVT_BUTTON, self.removeAllClicked )
+		self.m_portfoliolist.Bind( wx.EVT_LIST_ITEM_ACTIVATED, self.portfolioSelected )
 		self.m_stocklist.Bind( wx.EVT_LIST_ITEM_ACTIVATED, self.stockSelected )
 		self.m_startingdate.Bind( wx.EVT_DATE_CHANGED, self.startDateChanged )
 		self.m_rfRadBox.Bind( wx.EVT_RADIOBOX, self.rfrChanged )
@@ -217,6 +221,9 @@ class MainFrameBase ( wx.Frame ):
 	def removeAllClicked( self, event ):
 		event.Skip()
 	
+	def portfolioSelected( self, event ):
+		event.Skip()
+	
 	def stockSelected( self, event ):
 		event.Skip()
 	
@@ -234,7 +241,8 @@ class MainFrameBase ( wx.Frame ):
 	
 	def m_mniExitClick( self, event ):
 		event.Skip()
-		
+	
+
 ###########################################################################
 ## Class WeightDialogBase
 ###########################################################################

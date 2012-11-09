@@ -18,7 +18,15 @@ class MainFrame( gui.MainFrameBase ):
 	def __init__( self, parent, portfolio ):
 		gui.MainFrameBase.__init__( self, parent )
 		self.portfolio = portfolio
-		self.m_stocklist.InsertColumn(0, '')
+		self.m_portfoliolist.InsertColumn(0,'')
+		self.m_portfoliolist.InsertColumn(1, "Allocation")
+		self.m_portfoliolist.InsertColumn(2, "Mean Rate")
+		self.m_portfoliolist.InsertColumn(3, "Std. Deviation", width=120)
+		self.m_portfoliolist.InsertColumn(4, "Correlation")
+		self.m_portfoliolist.InsertColumn(5, "Beta")
+		self.m_portfoliolist.InsertColumn(6, "Sharpe Ratio")
+		self.m_portfoliolist.InsertStringItem(0, "Portfolio")
+		
 	# Handlers for MainFrameBase events.
 	def startDateChanged( self, event ):
 		# TODO: Implement startDateChanged
@@ -62,10 +70,8 @@ class MainFrame( gui.MainFrameBase ):
 				
 	def updateGridSymbols(self):
 		colcount = self.m_stocklist.ColumnCount
-		if colcount < 2:
-			self.m_stocklist.DeleteColumn(0)
+		if colcount < 1:
 			self.m_stocklist.InsertColumn(0, "Symbol")
-			
 		for asset in self.portfolio.assets:
 			pos = self.m_stocklist.FindItem(-1, asset.symbol)	
 			if pos ==-1:
@@ -75,15 +81,15 @@ class MainFrame( gui.MainFrameBase ):
 		
 	def calculateGrid(self):
 		allocations = self.portfolio.getAllocations()
-		colcount = self.m_stocklist.ColumnCount
-		if colcount < 4:
-			self.m_stocklist.InsertColumn(0, "Symbol")
-			self.m_stocklist.InsertColumn(1, "Mean Rate")
-			self.m_stocklist.InsertColumn(2, "Std. Deviation", width=120)
-			self.m_stocklist.InsertColumn(3, "Allocation")
-			self.m_stocklist.InsertColumn(4, "Correlation")
-			self.m_stocklist.InsertColumn(5, "Beta")
-			self.m_stocklist.InsertColumn(6, "Sharpe Ratio")
+#		colcount = self.m_stocklist.ColumnCount
+#		if colcount < 4:
+#			self.m_stocklist.InsertColumn(0, "Symbol")
+#			self.m_stocklist.InsertColumn(1, "Mean Rate")
+#			self.m_stocklist.InsertColumn(2, "Std. Deviation", width=120)
+#			self.m_stocklist.InsertColumn(3, "Allocation")
+#			self.m_stocklist.InsertColumn(4, "Correlation")
+#			self.m_stocklist.InsertColumn(5, "Beta")
+#			self.m_stocklist.InsertColumn(6, "Sharpe Ratio")
 		
 		if len(self.portfolio.assets) != 0:	
 			MRAprices = u.getHistoricalPrices("SPY")
@@ -117,20 +123,22 @@ class MainFrame( gui.MainFrameBase ):
 				if pos ==-1:
 					pos = self.m_stocklist.ItemCount
 					self.m_stocklist.InsertStringItem(pos, asset.symbol)
-					self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean)+"%")
-					self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd)+"%")
-					self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
+					self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annmean)+"%")
+					self.m_stocklist.SetStringItem(pos,3, str("%.2f" % annstd)+"%")
+					self.m_stocklist.SetStringItem(pos,1, str("%.2f" % allocations[asset.symbol]))
 					self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
 					self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
 					self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
 				else:
-					self.m_stocklist.SetStringItem(pos,1, str("%.2f" % annmean)+"%")
-					self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annstd)+"%")
-					self.m_stocklist.SetStringItem(pos,3, str("%.2f" % allocations[asset.symbol]))
+					self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annmean)+"%")
+					self.m_stocklist.SetStringItem(pos,3, str("%.2f" % annstd)+"%")
+					self.m_stocklist.SetStringItem(pos,1, str("%.2f" % allocations[asset.symbol]))
 					self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
 					self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
 					self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
-			weights = [.2,.2,.2,.2,.2]
+			
+			
+			weights = [a.weight for a in self.portfolio.assets]
 			cormatrix = self.portfolio.getMatrix(ratesmatrix)
 			cvmatrix,stdmarket,meanrates= self.portfolio.getMatrix(ratesmatrix, "covariance")
 			wsharpe = 0
@@ -152,7 +160,14 @@ class MainFrame( gui.MainFrameBase ):
 			print wrr
 			print "Weight standard deviation:"
 			print wstd
-
+			
+			self.m_portfoliolist.SetStringItem(pos,2, str("%.2f" % wrr)+"%")
+			self.m_portfoliolist.SetStringItem(pos,3, str("%.2f" % wstd)+"%")
+			self.m_portfoliolist.SetStringItem(pos,1, str("%.2f" % 1.00))
+			self.m_portfoliolist.SetStringItem(pos,4, str("%.2f" % wcor))
+			self.m_portfoliolist.SetStringItem(pos,5, str("%.2f" % wbeta))
+			self.m_portfoliolist.SetStringItem(pos,6, str("%.2f" % wsharpe))
+			
 			assets = []
 			assets.extend(self.portfolio.assets)
 			assets.append(marketRetAsset)
@@ -205,8 +220,8 @@ class MainFrame( gui.MainFrameBase ):
 		if self.m_backtestCB.IsChecked():
 			self.weightDialog = WeightDialog(self, self.portfolio)
 			self.weightDialog.Show()
-		
-		self.calculateGrid()
+		else:
+			self.calculateGrid()
 
 	def removeSelClicked( self, event ):
 		sel = self.m_stocklist.GetFirstSelected()
@@ -305,7 +320,12 @@ class WeightDialog( gui.WeightDialogBase ):
 						break
 			
 	def weightCancelClicked( self, event ):
+		self.Hide()
 		self.Destroy()
 	
 	def weightOKClicked( self, event ):
-		pass
+		for asset in self.portfolio.assets:
+			asset.weight = float(self.sliders[asset.symbol].GetValue())/100.0
+		self.Hide()
+		self.GetParent().calculateGrid()
+		self.Destroy()
