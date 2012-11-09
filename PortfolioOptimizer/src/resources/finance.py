@@ -32,12 +32,14 @@ class Portfolio(object):
     def getMatrix(self,rates,matrixtype="correlation"):  
         A = num.empty(shape = (len(rates[0]),0))
         stdassetrr = []
+        meanrrs = []
         for raterow in rates:
             assetrates, rfrates, marketrates = zip(*raterow)
             assetrr = []
             for i in range(0,len(assetrates)):
                 assetrr.append(assetrates[i]-rfrates[i])
             meanassetrr = num.mean(assetrr)
+            meanrrs.append(meanassetrr)
             stdassetrr.append(num.std(assetrr))
             excessrr = [rr-meanassetrr for rr in assetrr]
             excessrates = num.array(excessrr).T
@@ -55,7 +57,7 @@ class Portfolio(object):
         C = num.dot(A.T,A)/len(rates[0])
         print C
         if matrixtype == "covariance":
-            return C
+            return C, stdmarketrr, meanrrs
         stdassetrr.append(stdmarketrr)
         B = num.empty(shape = (len(rates)+1, len(rates)+1))
         for i in range(0,len(stdassetrr)):
@@ -66,35 +68,53 @@ class Portfolio(object):
         if matrixtype == "correlation":
             return P
         
-        def getWeightedReturn(self, meanrates,weights):
-            meanrr = num.array(meanrates)
-            weights = num.array(weights)
-            weightedrr = num.dot(meanrr, weights)
-            return weightedrr
+    def getWeightedReturn(self, meanrates,weights):
+        meanrr = num.array(meanrates)
+        print meanrates
+        weights = num.array(weights)
+        weightedrr = num.dot(meanrr.T, weights)*252
+        print 'Weighted annualized mean return rate: '
+        print weightedrr
+        return weightedrr
             
-        def getWeightedCovariance(self, matrix, weights, withmarket='true'):
-            if withmarket:
-                weights1 = num.c_[weights,0]
-                weights2 = num.c_[[0]*len(weights1),1]
-            else:
-                weights1 = weights
-                weights2 = weights
-                matrix = matrix[1:len(weights),1:len(weights)]
-            weightedcov = num.dot(weights1, num.dot(matrix,weights2))
-            return weightedcov
+    def getWeightedCovariance(self, matrix, weights, withmarket):
+        if withmarket==True:
+            weights2 = []
+            for i in range(len(weights)):
+                weights2.append(0)
+                i=i+1
+            weights2.append(1)
+            weights2 = num.array(weights2)
+            weights1 = []
+            for i in range(len(weights)):
+                weights1.append(weights[i])
+            weights1.append(0)
+            weights1 = num.array(weights1)
+        elif withmarket==False:
+            weights1 = num.array(weights)
+            weights2 = num.array(weights)
+            matrix = matrix[0:len(weights),0:len(weights)]
+        weightedcov = num.dot(weights1.T, num.dot(matrix,weights2))
+        return weightedcov
+        
             
-                
-        def getWeightedCorrelation(self, weightedcov, weightedvar, marketstd):
-            weightedcor = weightedcov/(num.sqrt(weightedvar)*marketstd)
-            return weightedcor
-        
-        def getWeightedBeta(self,weightedcor, weightedstd, marketstd):
-            weightedbeta = weightedcor*(weightedstd/marketstd)
-            return weightedbeta
-        
-        def getWeightedSharpe(self,weightedrr, weightedstd):
-            weightedsharpe = weightedrr/weightedstd * (252/num.sqrt(252))
-            return weightedsharpe
+    def getWeightedCorrelation(self, weightedcov, weightedvar, marketstd):
+        weightedcor = weightedcov/(num.sqrt(weightedvar)*marketstd)
+        print 'Weighted correlation: '
+        print weightedcor
+        return weightedcor
+    
+    def getWeightedBeta(self,weightedcor, weightedvar, marketstd): 
+        weightedbeta = weightedcor*(num.sqrt(weightedvar)/marketstd)
+        print 'Weighted beta: '
+        print weightedbeta
+        return weightedbeta
+    
+    def getWeightedSharpe(self,weightedrr, weightedvar): 
+        weightedsharpe = (weightedrr/num.sqrt(weightedvar))
+        print 'Weighted sharpe: '
+        print weightedsharpe
+        return weightedsharpe
         
            
     
