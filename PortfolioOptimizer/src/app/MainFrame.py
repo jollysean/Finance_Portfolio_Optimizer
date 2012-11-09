@@ -43,6 +43,19 @@ class MainFrame( gui.MainFrameBase ):
 		plt.ylabel("Market Value")
 		plt.title(stock.symbol)
 		plt.show()
+		
+	def portfolioSelected(self, event):
+		returns = []
+		risks = []
+		for asset in self.portfolio.assets:
+			returns.append(asset.getMeanROR(annualized=True))
+			risks.append(asset.getStd(annualized=True))
+		plt.figure(1)
+		plt.subplot(111)
+		plt.scatter(returns, risks)
+		plt.xlabel('Average Return Rate on Asset')
+		plt.ylabel('Standard Deviation (Risk) of Asset')
+		plt.show()
 	
 	def m_addButtonClick( self, event ):
 		
