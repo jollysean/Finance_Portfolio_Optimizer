@@ -19,7 +19,7 @@ m_mniExitId = 1000
 class MainFrameBase ( wx.Frame ):
 	
 	def __init__( self, parent ):
-		wx.Frame.__init__  ( self, parent, id = wx.ID_ANY, title = u"Portfolio Optimizer", pos = wx.DefaultPosition, size = wx.Size( 600,600 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__  ( self, parent, id = wx.ID_ANY, title = u"Portfolio Optimizer", pos = wx.DefaultPosition, size = wx.Size( 700,600 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
@@ -80,7 +80,7 @@ class MainFrameBase ( wx.Frame ):
 		self.m_panel41 = wx.Panel( self.m_notebook4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer131 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_portfoliolist = wx.ListCtrl( self.m_panel41, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LC_HRULES|wx.LC_REPORT|wx.LC_VRULES )
+		self.m_portfoliolist = wx.ListCtrl( self.m_panel41, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,45 ), wx.LC_HRULES|wx.LC_REPORT|wx.LC_VRULES )
 		self.m_portfoliolist.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
 		
 		bSizer131.Add( self.m_portfoliolist, 0, wx.ALL|wx.EXPAND, 5 )
