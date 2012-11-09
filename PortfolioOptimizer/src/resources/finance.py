@@ -116,8 +116,7 @@ class Portfolio(object):
         print weightedsharpe
         return weightedsharpe
         
-                
-                
+           
     
 class Asset:
     """Represents an asset"""
@@ -126,7 +125,7 @@ class Asset:
         self.prices = {}
         for p in prices:
             self.prices[p.date] = p
-            
+        self.weight = 0
         self.startdate = min([date for date,price in self.prices.iteritems()]) 
         self.rates = self.getRatesOfReturn   
     
