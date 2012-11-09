@@ -115,7 +115,7 @@ class MainFrame( gui.MainFrameBase ):
 			dates = u.date_range(self.portfolio.startdate)
 			
 			ratesmatrix = []
-					
+			sharpes = {}
 			for asset in self.portfolio.assets:
 				rates = asset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
 				annmean = 100 * asset.getMeanROR(rates, annualized=True)
@@ -128,6 +128,8 @@ class MainFrame( gui.MainFrameBase ):
 				correlation = asset.getCorrelation(rateBundle)
 				beta = asset.getBeta(rateBundle, correlation)
 				sharpe = asset.getSharpe(rateBundle)
+				
+				sharpes[asset] = sharpe
 				
 				ratesmatrix.append(rateBundle)
 				
@@ -148,8 +150,29 @@ class MainFrame( gui.MainFrameBase ):
 					self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
 					self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
 					self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
+			weights = [.2,.2,.2,.2,.2]
+			cormatrix = self.portfolio.getMatrix(ratesmatrix)
+			cvmatrix,stdmarket,meanrates= self.portfolio.getMatrix(ratesmatrix, "covariance")
+			wsharpe = 0
+			i=0
+			for asset in self.portfolio.assets:
+				wsharpe += sharpes[asset]*weights[i]
+				i=i+1
+			print "Weighted Sharpe:"
+			print wsharpe
+			
+			wcovwithmarket = self.portfolio.getWeightedCovariance(cvmatrix, weights, True)
+			wvar = self.portfolio.getWeightedCovariance(cvmatrix, weights, False)
+#			wrr = self.portfolio.getWeightedReturn(meanrates, weights)
+			wcor = self.portfolio.getWeightedCorrelation(wcovwithmarket,wvar,stdmarket)
+			wbeta = self.portfolio.getWeightedBeta(wcor, wvar,stdmarket)
+			wstd = num.sqrt(wvar)*num.sqrt(252)
+			wrr = wsharpe*wstd
+			print "Weighted annualized mean return rate?"
+			print wrr
+			print "Weight standard deviation:"
+			print wstd
 
-			cvmatrix = self.portfolio.getMatrix(ratesmatrix)
 			assets = []
 			assets.extend(self.portfolio.assets)
 			assets.append(marketRetAsset)
@@ -168,7 +191,7 @@ class MainFrame( gui.MainFrameBase ):
 				i = i+1
 			for i in range(len(assets)):
 				for j in range(len(assets)):
-					self.m_corgrid.SetCellValue(i, j, str("%.2f" % cvmatrix[i][j]))
+					self.m_corgrid.SetCellValue(i, j, str("%.2f" % cormatrix[i][j]))
 			
 
 	def removeSelClicked( self, event ):
