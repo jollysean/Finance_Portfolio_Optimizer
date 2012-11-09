@@ -55,6 +55,7 @@ class MainFrame( gui.MainFrameBase ):
 		plt.scatter(returns, risks)
 		plt.xlabel('Average Return Rate on Asset')
 		plt.ylabel('Standard Deviation (Risk) of Asset')
+		plt.title('Portfolio Risk vs. Return')
 		plt.show()
 	
 	def m_addButtonClick( self, event ):
