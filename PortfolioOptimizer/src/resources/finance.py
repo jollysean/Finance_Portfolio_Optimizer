@@ -66,6 +66,36 @@ class Portfolio(object):
         if matrixtype == "correlation":
             return P
         
+        def getWeightedReturn(self, meanrates,weights):
+            meanrr = num.array(meanrates)
+            weights = num.array(weights)
+            weightedrr = num.dot(meanrr, weights)
+            return weightedrr
+            
+        def getWeightedCovariance(self, matrix, weights, withmarket='true'):
+            if withmarket:
+                weights1 = num.c_[weights,0]
+                weights2 = num.c_[[0]*len(weights1),1]
+            else:
+                weights1 = weights
+                weights2 = weights
+                matrix = matrix[1:len(weights),1:len(weights)]
+            weightedcov = num.dot(weights1, num.dot(matrix,weights2))
+            return weightedcov
+            
+                
+        def getWeightedCorrelation(self, weightedcov, weightedvar, marketstd):
+            weightedcor = weightedcov/(num.sqrt(weightedvar)*marketstd)
+            return weightedcor
+        
+        def getWeightedBeta(self,weightedcor, weightedstd, marketstd):
+            weightedbeta = weightedcor*(weightedstd/marketstd)
+            return weightedbeta
+        
+        def getWeightedSharpe(self,weightedrr, weightedstd):
+            weightedsharpe = weightedrr/weightedstd * (252/num.sqrt(252))
+            return weightedsharpe
+        
                 
                 
     
