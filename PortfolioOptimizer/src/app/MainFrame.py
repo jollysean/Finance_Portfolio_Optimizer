@@ -18,6 +18,10 @@ class MainFrame( gui.MainFrameBase ):
 	def __init__( self, parent, portfolio ):
 		gui.MainFrameBase.__init__( self, parent )
 		self.portfolio = portfolio
+		self.initPortGrid()
+		
+	# Handlers for MainFrameBase events.
+	def initPortGrid(self):
 		self.m_portfoliolist.InsertColumn(0,'')
 		self.m_portfoliolist.InsertColumn(1, "Allocation")
 		self.m_portfoliolist.InsertColumn(2, "Mean Rate")
@@ -28,7 +32,6 @@ class MainFrame( gui.MainFrameBase ):
 		self.m_portfoliolist.InsertStringItem(0, "Portfolio")
 		self.m_portfoliolist.SetStringItem(0,1, str("%.2f" % 1.00))
 		
-	# Handlers for MainFrameBase events.
 	def startDateChanged( self, event ):
 		# TODO: Implement startDateChanged
 		pass
@@ -81,6 +84,7 @@ class MainFrame( gui.MainFrameBase ):
 				prices = u.getHistoricalPrices(s)
 				asset = fin.Asset(s, prices)
 				self.portfolio.addAsset(asset)
+		self.m_symbolinput.SetValue("")
 		self.updateGridSymbols()
 				
 	def updateGridSymbols(self):
@@ -255,6 +259,9 @@ class MainFrame( gui.MainFrameBase ):
 		del self.portfolio.assets
 		self.portfolio.assets = []
 		self.m_stocklist.DeleteAllItems()
+		self.m_portfoliolist.DeleteAllItems()
+		self.m_portfoliolist.DeleteAllColumns()
+		self.initPortGrid()
 		self.m_corgrid.ClearGrid()
 		while self.m_corgrid.NumberRows != 0:
 			self.m_corgrid.DeleteCols()
