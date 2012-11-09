@@ -96,8 +96,7 @@ class Portfolio(object):
             weightedsharpe = weightedrr/weightedstd * (252/num.sqrt(252))
             return weightedsharpe
         
-                
-                
+           
     
 class Asset:
     """Represents an asset"""

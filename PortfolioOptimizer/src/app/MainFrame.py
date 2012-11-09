@@ -19,7 +19,6 @@ class MainFrame( gui.MainFrameBase ):
 		gui.MainFrameBase.__init__( self, parent )
 		self.portfolio = portfolio
 		self.m_stocklist.InsertColumn(0, '')
-	
 	# Handlers for MainFrameBase events.
 	def startDateChanged( self, event ):
 		# TODO: Implement startDateChanged
@@ -53,45 +52,26 @@ class MainFrame( gui.MainFrameBase ):
 		
 		"""Get the historical prices and
 		create a new Asset object for each stock symbol"""
+		curSymbols = [a.symbol for a in self.portfolio.assets]
 		for s in stocks:
-			exists = False
-			for a in self.portfolio.assets:
-				if a.symbol == s:
-					exists = True
-	
-			if not exists:
+			if s not in curSymbols:
 				prices = u.getHistoricalPrices(s)
 				asset = fin.Asset(s, prices)
 				self.portfolio.addAsset(asset)
-		
-		"""
-		Set the start date of the portfolio based upon the
-		stock with the most recent startdate
-		"""
-		dates = [stock.startdate for stock in self.portfolio.assets]
-		
-		dateWidgetValue = cal._wxdate2pydate(self.m_startingdate.GetValue())
-		dates.append(dateWidgetValue)
-		maxdate = max(dates)
-
-		if not maxdate == dateWidgetValue:
-			for stock in self.portfolio.assets:
-				if stock.startdate == maxdate:
-					datedictator = stock 
-					message = "The stock %s has a later starting date than you specified. Your portfolio's start date will be set to %s ." %(datedictator.symbol, datedictator.startdate)			
-					wx.MessageBox(message, 'Info', wx.OK | wx.ICON_INFORMATION)
+		self.updateGridSymbols()
 				
-			self.m_startingdate.SetValue(cal._pydate2wxdate(maxdate))
-		self.portfolio.startdate = maxdate
-		
-		if self.m_meanCalcRadBox.GetStringSelection()=="Simple":
-			self.portfolio.ratemethod = "Simple"
-		else:
-			self.portfolio.ratemethod = "Log"
-		for asset in self.portfolio.assets:
-			asset.rates = asset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
+	def updateGridSymbols(self):
+		colcount = self.m_stocklist.ColumnCount
+		if colcount < 2:
+			self.m_stocklist.DeleteColumn(0)
+			self.m_stocklist.InsertColumn(0, "Symbol")
 			
-		self.calculateGrid()
+		for asset in self.portfolio.assets:
+			pos = self.m_stocklist.FindItem(-1, asset.symbol)	
+			if pos ==-1:
+				pos = self.m_stocklist.ItemCount
+				self.m_stocklist.InsertStringItem(pos, asset.symbol)
+				self.m_stocklist.SetStringItem(pos,0, asset.symbol)
 		
 	def calculateGrid(self):
 		allocations = self.portfolio.getAllocations()
@@ -170,6 +150,40 @@ class MainFrame( gui.MainFrameBase ):
 				for j in range(len(assets)):
 					self.m_corgrid.SetCellValue(i, j, str("%.2f" % cvmatrix[i][j]))
 			
+	def analyzeButtonClicked( self, event ):
+		"""
+		Set the start date of the portfolio based upon the
+		stock with the most recent startdate
+		"""
+		
+		dates = [stock.startdate for stock in self.portfolio.assets]
+		
+		dateWidgetValue = cal._wxdate2pydate(self.m_startingdate.GetValue())
+		dates.append(dateWidgetValue)
+		maxdate = max(dates)
+
+		if not maxdate == dateWidgetValue:
+			for stock in self.portfolio.assets:
+				if stock.startdate == maxdate:
+					datedictator = stock 
+					message = "The stock %s has a later starting date than you specified. Your portfolio's start date will be set to %s ." %(datedictator.symbol, datedictator.startdate)			
+					wx.MessageBox(message, 'Info', wx.OK | wx.ICON_INFORMATION)
+				
+			self.m_startingdate.SetValue(cal._pydate2wxdate(maxdate))
+		self.portfolio.startdate = maxdate
+		
+		if self.m_meanCalcRadBox.GetStringSelection()=="Simple":
+			self.portfolio.ratemethod = "Simple"
+		else:
+			self.portfolio.ratemethod = "Log"
+		for asset in self.portfolio.assets:
+			asset.rates = asset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
+		
+		if self.m_backtestCB.IsChecked():
+			self.weightDialog = WeightDialog(self, self.portfolio)
+			self.weightDialog.Show()
+		
+		self.calculateGrid()
 
 	def removeSelClicked( self, event ):
 		sel = self.m_stocklist.GetFirstSelected()
@@ -184,7 +198,6 @@ class MainFrame( gui.MainFrameBase ):
 			self.m_stocklist.DeleteItem(sel)
 			self.calculateGrid()
 			
-	
 	def removeAllClicked( self, event ):
 		del self.portfolio.assets
 		self.portfolio.assets = []
@@ -208,5 +221,68 @@ class MainFrame( gui.MainFrameBase ):
 	def m_mniExitClick( self, event ):
 		# TODO: Implement m_mniExitClick
 		pass
+
+class WeightDialog( gui.WeightDialogBase ):
+	def __init__( self, parent, portfolio ):
+		gui.WeightDialogBase.__init__( self, parent )
+		self.portfolio = portfolio
+		self.totalValue = 100
+		self.addSliders()
 	
+	def addSliders(self):
+		self.sliders = {}
+		self.sliderLabels = {}
+		gSizer = self.sliderPanel.GetSizer()
+		
+		self.sliderPanel.DestroyChildren()
+		val = 100/len(self.portfolio.assets)
+		for asset in self.portfolio.assets:
+			slider = wx.Slider(self.sliderPanel, wx.ID_ANY, val, 0, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL|wx.SL_LABELS)
+			label = wx.StaticText(self.sliderPanel, wx.ID_ANY, asset.symbol, wx.DefaultPosition, wx.DefaultSize, 0)
+			label.SetFont( wx.Font( 12, 70, 90, 90, False, wx.EmptyString ) )
+			slider.Bind( wx.EVT_SCROLL, self.sliderScrolling )
+			gSizer.Add(label, 0, wx.ALL|wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 5 )
+			gSizer.Add(slider, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+			self.sliders[asset.symbol] = slider
+			self.sliderLabels[asset.symbol] = label
+		
+		val *= len(self.portfolio.assets)
+		if val != 100:
+			add = 100-val
+			sl = self.sliders.values()[0]
+			sl.SetValue(sl.GetValue()+add)
+			
+		self.sliderPanel.SetSizer(gSizer)
+		self.sliderPanel.Layout()
+		self.sliderPanel.Fit()
+		gSizer.Fit(self.sliderPanel)
+		self.Layout()
+		self.Fit()
 	
+	def sliderScrolling(self, event):
+		slideObj = event.EventObject
+		val = 0
+		for s in self.sliders.itervalues():
+			val += s.GetValue()
+		
+		if val > 100:
+			surplus = val - 100
+			while int(surplus) > 0:
+				slides = [s for s in self.sliders.values() if s.GetId() != slideObj.GetId() and s.GetValue() != 0]
+				diff = int(surplus/len(slides))
+				if diff == 0:
+					diff = surplus
+					
+				for s in slides:										
+					sVal = s.GetValue()
+					if sVal-diff >= 0:
+						s.SetValue(int(sVal - diff))
+						surplus -= int(diff)
+					if surplus <= 0:
+						break
+			
+	def weightCancelClicked( self, event ):
+		self.Destroy()
+	
+	def weightOKClicked( self, event ):
+		pass
