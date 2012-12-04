@@ -96,8 +96,7 @@ class Portfolio(object):
             matrix = matrix[0:len(weights),0:len(weights)]
         weightedcov = num.dot(weights1.T, num.dot(matrix,weights2))
         return weightedcov
-        
-            
+                  
     def getWeightedCorrelation(self, weightedcov, weightedvar, marketstd):
         weightedcor = weightedcov/(num.sqrt(weightedvar)*marketstd)
         print 'Weighted correlation: '
@@ -115,9 +114,7 @@ class Portfolio(object):
         print 'Weighted sharpe: '
         print weightedsharpe
         return weightedsharpe
-        
-           
-    
+       
 class Asset:
     """Represents an asset"""
     def __init__(self, symbol, prices):
