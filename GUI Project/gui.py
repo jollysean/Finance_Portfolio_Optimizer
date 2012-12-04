@@ -62,7 +62,7 @@ class MainFrameBase ( wx.Frame ):
 		bSizer132 = wx.BoxSizer( wx.VERTICAL )
 		
 		
-		bSizer132.AddSpacer( ( 0, 0), 1, wx.EXPAND, 5 )
+		bSizer132.AddSpacer( ( 0, 0), 0, wx.EXPAND, 5 )
 		
 		self.m_clearSelButton = wx.Button( self.m_panel, wx.ID_ANY, u"Remove Selected", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer132.Add( self.m_clearSelButton, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL, 5 )
@@ -71,6 +71,26 @@ class MainFrameBase ( wx.Frame ):
 		bSizer132.Add( self.m_clearAllButton, 0, wx.ALIGN_CENTER|wx.ALIGN_CENTER_HORIZONTAL|wx.EXPAND, 5 )
 		
 		bSizer14.Add( bSizer132, 0, wx.EXPAND|wx.LEFT, 5 )
+		
+		bSizer16 = wx.BoxSizer( wx.VERTICAL )
+		
+		m_returnTypeChoices = [ u"Historical", u"CAPM" ]
+		self.m_returnType = wx.RadioBox( self.m_panel, wx.ID_ANY, u"Return Rate Type", wx.DefaultPosition, wx.DefaultSize, m_returnTypeChoices, 1, wx.RA_SPECIFY_COLS )
+		self.m_returnType.SetSelection( 0 )
+		bSizer16.Add( self.m_returnType, 0, wx.ALL, 5 )
+		
+		self.m_expectedMarketrrLabel = wx.StaticText( self.m_panel, wx.ID_ANY, u"Expected Market Return Rate", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_expectedMarketrrLabel.Wrap( -1 )
+		self.m_expectedMarketrrLabel.Hide()
+		
+		bSizer16.Add( self.m_expectedMarketrrLabel, 0, wx.ALL|wx.ALIGN_RIGHT, 5 )
+		
+		self.m_marketReturnRate = wx.TextCtrl( self.m_panel, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_marketReturnRate.Hide()
+		
+		bSizer16.Add( self.m_marketReturnRate, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.EXPAND, 5 )
+		
+		bSizer14.Add( bSizer16, 1, wx.EXPAND, 5 )
 		
 		bSizer9.Add( bSizer14, 0, wx.EXPAND, 5 )
 		
@@ -199,6 +219,7 @@ class MainFrameBase ( wx.Frame ):
 		self.m_addbutton.Bind( wx.EVT_BUTTON, self.m_addButtonClick )
 		self.m_clearSelButton.Bind( wx.EVT_BUTTON, self.removeSelClicked )
 		self.m_clearAllButton.Bind( wx.EVT_BUTTON, self.removeAllClicked )
+		self.m_returnType.Bind( wx.EVT_RADIOBOX, self.m_returnTypeChanged )
 		self.m_portfoliolist.Bind( wx.EVT_LIST_ITEM_ACTIVATED, self.portfolioSelected )
 		self.m_stocklist.Bind( wx.EVT_LIST_ITEM_ACTIVATED, self.stockSelected )
 		self.m_startingdate.Bind( wx.EVT_DATE_CHANGED, self.startDateChanged )
@@ -219,6 +240,9 @@ class MainFrameBase ( wx.Frame ):
 		event.Skip()
 	
 	def removeAllClicked( self, event ):
+		event.Skip()
+	
+	def m_returnTypeChanged( self, event ):
 		event.Skip()
 	
 	def portfolioSelected( self, event ):

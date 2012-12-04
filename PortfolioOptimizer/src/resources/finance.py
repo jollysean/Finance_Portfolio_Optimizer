@@ -10,10 +10,11 @@ from datetime import date
 class Portfolio(object):
     """Represents a portfolio, which consists of a list of assets as well as a start date."""
     
-    def __init__(self, assets=[], startdate=date.min, ratemethod="Log"):
+    def __init__(self, assets=[], startdate=date.min, ratemethod="Log", returnmethod="Historical"):
         self.assets = assets
         self.startdate = startdate
         self.ratemethod = ratemethod
+        self.returnmethod = returnmethod
         
     def addAsset(self, asset):
         self.assets.append(asset)
@@ -152,17 +153,23 @@ class Asset:
         return std
      
         
-    def getMeanROR(self,rates={},startdate=None, ratemethod="Log", annualized=False):
-        if startdate==None:
-            startdate = self.startdate
-        if len(rates)==0:
-            rates = self.rates
-        if type(rates) is dict:
-            rates = [float(rate) for rate in rates.itervalues()]
-        meanROR = num.mean(rates)
-        if annualized:
-            meanROR = meanROR*252
-        return meanROR
+    def getMeanROR(self,rates={},startdate=None, ratemethod="Log", annualized=False, returnmethod="Historical", marketrate=0, rfrate=0, B=0):
+        if returnmethod == "CAPM":
+            return self.getRatewithCAPM(marketrate, rfrate, B)
+        else:
+            if startdate==None:
+                startdate = self.startdate
+            if len(rates)==0:
+                rates = self.rates
+            if type(rates) is dict:
+                rates = [float(rate) for rate in rates.itervalues()]
+            meanROR = num.mean(rates)
+            if annualized:
+                meanROR = meanROR*252
+            return meanROR
+    
+    def getRatewithCAPM(self,marketrate,rfrate,beta):
+        return rfrate-beta*(marketrate-rfrate)
     
     def getCorrelation(self, rates):
         assetrr = []

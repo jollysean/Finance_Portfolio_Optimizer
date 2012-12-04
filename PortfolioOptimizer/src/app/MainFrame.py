@@ -68,6 +68,21 @@ class MainFrame( gui.MainFrameBase ):
 		plt.ylabel('Standard Deviation (Risk) of Asset')
 		plt.title('Portfolio Risk vs. Return')
 		plt.show()
+		
+	def m_returnTypeChanged(self, event):
+		method = self.m_returnType.GetStringSelection()
+		if method != "Historical":
+			method = "CAPM"
+			self.m_expectedMarketrrLabel.Show()
+			self.m_marketReturnRate.Show()
+			self.SetSize((self.GetSize().width, self.GetSize().height+1))
+			self.SetSize((self.GetSize().width, self.GetSize().height-1))
+		else:
+			self.m_expectedMarketrrLabel.Hide()
+			self.m_marketReturnRate.Hide()
+		self.portfolio.returnmethod = method
+		self.calculateGrid()
+		
 	
 	def m_addButtonClick( self, event ):
 		
@@ -97,6 +112,8 @@ class MainFrame( gui.MainFrameBase ):
 				pos = self.m_stocklist.ItemCount
 				self.m_stocklist.InsertStringItem(pos, asset.symbol)
 				self.m_stocklist.SetStringItem(pos,0, asset.symbol)
+				
+
 		
 	def calculateGrid(self):
 		allocations = self.portfolio.getAllocations()
@@ -123,8 +140,6 @@ class MainFrame( gui.MainFrameBase ):
 			sharpes = {}
 			for asset in self.portfolio.assets:
 				rates = asset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
-				annmean = 100 * asset.getMeanROR(rates, annualized=True)
-				annstd = 100 * asset.getStd(rates, annualized=True)
 				rateBundle = []
 				for d in dates:
 					if d in rfRates.keys() and d in mrRates.keys() and d in rates.keys():
@@ -134,10 +149,17 @@ class MainFrame( gui.MainFrameBase ):
 				beta = asset.getBeta(rateBundle, correlation)
 				sharpe = asset.getSharpe(rateBundle)
 				
+				mostrecentrfr = max(rfRates.keys())
+				if self.portfolio.returnmethod=="CAPM":	
+					marketrr = float(self.m_marketReturnRate.Value)
+					annmean = 100 * asset.getMeanROR(rates, annualized=True, returnmethod="CAPM", marketrate=marketrr, rfrate=rfRates[mostrecentrfr], B=beta)
+				else:
+					annmean = 100 * asset.getMeanROR(rates, annualized=True, returnmethod="Historical")
+				annstd = 100 * asset.getStd(rates, annualized=True)
 				sharpes[asset] = sharpe
 				
 				ratesmatrix.append(rateBundle)
-				
+				print annmean
 				pos = self.m_stocklist.FindItem(-1, asset.symbol)	
 				if pos ==-1:
 					pos = self.m_stocklist.ItemCount
@@ -170,11 +192,11 @@ class MainFrame( gui.MainFrameBase ):
 			
 			wcovwithmarket = self.portfolio.getWeightedCovariance(cvmatrix, weights, True)
 			wvar = self.portfolio.getWeightedCovariance(cvmatrix, weights, False)
-#			wrr = self.portfolio.getWeightedReturn(meanrates, weights)
+			wrr = self.portfolio.getWeightedReturn(meanrates, weights)*100
 			wcor = self.portfolio.getWeightedCorrelation(wcovwithmarket,wvar,stdmarket)
 			wbeta = self.portfolio.getWeightedBeta(wcor, wvar,stdmarket)
-			wstd = num.sqrt(wvar)*num.sqrt(252)
-			wrr = wsharpe*wstd
+			wstd = num.sqrt(wvar)*num.sqrt(252)*100
+			#wrr = wsharpe*wstd
 			print "Weighted annualized mean return rate?"
 			print wrr
 			print "Weight standard deviation:"
