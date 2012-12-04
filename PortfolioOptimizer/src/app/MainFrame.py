@@ -177,11 +177,23 @@ class MainFrame( gui.MainFrameBase ):
 					self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
 					self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
 					self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
+	
 			
-			
-			weights = [a.weight for a in self.portfolio.assets]
+			"""TODO: Fix this. I'm assigning properties of portfolio based on the return of its own methods. 
+			         This is the epitome of tight coupling. Stop it. Right now."""
+			self.portfolio.ratesmatrix = ratesmatrix
 			cormatrix = self.portfolio.getMatrix(ratesmatrix)
+			self.portfolio.cormatrix = cormatrix
 			cvmatrix,stdmarket,meanrates= self.portfolio.getMatrix(ratesmatrix, "covariance")
+			self.portfolio.cvmatrix = cvmatrix
+			self.portfolio.stdmarket = stdmarket
+			self.portfolio.meanrates = meanrates
+			
+			results = u.optimizePortfolio(self.portfolio, numSamples=100)
+			for asset in self.portfolio.assets:
+				pass
+				
+			weights = [a.weight for a in reversed(self.portfolio.assets)]
 			wsharpe = 0
 			i=0
 			for asset in self.portfolio.assets:
@@ -191,11 +203,14 @@ class MainFrame( gui.MainFrameBase ):
 			print wsharpe
 			
 			wcovwithmarket = self.portfolio.getWeightedCovariance(cvmatrix, weights, True)
+			self.portfolio.wcovwithmarket = wcovwithmarket
+			
 			wvar = self.portfolio.getWeightedCovariance(cvmatrix, weights, False)
 			wrr = self.portfolio.getWeightedReturn(meanrates, weights)*100
 			wcor = self.portfolio.getWeightedCorrelation(wcovwithmarket,wvar,stdmarket)
 			wbeta = self.portfolio.getWeightedBeta(wcor, wvar,stdmarket)
 			wstd = num.sqrt(wvar)*num.sqrt(252)*100
+
 			#wrr = wsharpe*wstd
 			print "Weighted annualized mean return rate?"
 			print wrr
@@ -224,7 +239,9 @@ class MainFrame( gui.MainFrameBase ):
 			for asset in assets:
 				self.m_corgrid.SetRowLabelValue(i, asset.symbol)
 				self.m_corgrid.SetColLabelValue(i, asset.symbol)
+				asset.covariances = {}
 				i = i+1
+							
 			for i in range(len(assets)):
 				for j in range(len(assets)):
 					self.m_corgrid.SetCellValue(i, j, str("%.2f" % cormatrix[i][j]))
@@ -298,7 +315,7 @@ class MainFrame( gui.MainFrameBase ):
 		if method != "Simple":
 			method = "Log"
 		self.portfolio.ratemethod = method
-		self.calculateGrid()
+		#self.calculateGrid()
 	
 	def m_mniExitClick( self, event ):
 		# TODO: Implement m_mniExitClick

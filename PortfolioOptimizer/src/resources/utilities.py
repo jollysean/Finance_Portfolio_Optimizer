@@ -1,7 +1,9 @@
 import csv
 import urllib2
+import json
 import finance as fin
 import datetime as dt
+import sys
 from StringIO import StringIO as sIO
 	
 	
@@ -44,7 +46,41 @@ def datetimeIterator(from_date=dt.datetime.now(), to_date=None):
 		from_date = from_date + dt.timedelta(days = 1)
 	return
 
-
+def optimizePortfolio(portfolio, numSamples = 1, minRetRate = None):
+	resultList = []
+	lowerMin = sys.float_info.max
+	upperMin = sys.float_info.min
+	for asset in portfolio.assets:
+		assMean = asset.getMeanROR()
+		if assMean < lowerMin:
+			lowerMin = assMean
+		if assMean > upperMin:
+			upperMin = assMean
+	
+	mincrease = (upperMin - lowerMin)/numSamples
+	minReturn = lowerMin
+	if numSamples == 1 and minRetRate != None:
+		minReturn = minRetRate
+		
+	for n in range(numSamples):
+		minReturn += n*mincrease
+			
+		url = "http://optimization.andrewgaspar.com/api/optimize"
+		data = {'MinimumReturn': minReturn, 'Stocks' : [] }
+		headers = {'Content-Type': 'application/json', 'Accept': 'text/plain'}
+		assets = portfolio.assets
+		for i in range(len(assets)):
+			stock = {'Symbol': assets[i].symbol, 'MeanReturnRate': assets[i].getMeanROR(), 'Covariances': {}}
+			for j in range(len(assets)):
+				stock['Covariances'][assets[j].symbol] = portfolio.cvmatrix[i][j]
+			data['Stocks'].append(stock)
+		
+		request = urllib2.Request(url, json.dumps(data), headers)
+		resp = urllib2.urlopen(request)
+		optResult = json.loads(resp.read())
+		resultList.append(optResult)
+	
+	return resultList
 	
 	
 		
