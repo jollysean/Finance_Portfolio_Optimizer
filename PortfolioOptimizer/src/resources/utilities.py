@@ -46,42 +46,78 @@ def datetimeIterator(from_date=dt.datetime.now(), to_date=None):
 		from_date = from_date + dt.timedelta(days = 1)
 	return
 
-def optimizePortfolio(portfolio, numSamples = 1, minRetRate = None):
+def optimizePortfolio(portfolio, step = 0.0025):
 	resultList = []
-	lowerMin = sys.float_info.max
-	upperMin = sys.float_info.min
-	for asset in portfolio.assets:
-		assMean = asset.getMeanROR()
-		if assMean < lowerMin:
-			lowerMin = assMean
-		if assMean > upperMin:
-			upperMin = assMean
 	
-	mincrease = (upperMin - lowerMin)/numSamples
-	minReturn = lowerMin
-	if numSamples == 1 and minRetRate != None:
-		minReturn = minRetRate
-		
-	for n in range(numSamples):
-		minReturn += n*mincrease
-			
-		url = "http://optimization.andrewgaspar.com/api/optimize"
+	url = "http://optimization.andrewgaspar.com/api/optimize"
+	data = {'Stocks' : [] }
+	headers = {'Content-Type': 'application/json', 'Accept': 'text/plain'}
+	assets = portfolio.assets
+	for i in range(len(assets)):
+		stock = {'Symbol': assets[i].symbol, 'MeanReturnRate': assets[i].mean*252, 'Covariances': {}}
+		for j in range(len(assets)):
+			stock['Covariances'][assets[j].symbol] = portfolio.cvmatrix[i][j]
+		data['Stocks'].append(stock)
+	
+	request = urllib2.Request(url, json.dumps(data), headers)
+	resp = urllib2.urlopen(request)
+	optResult = json.loads(resp.read())
+	
+	minReturn = optResult['ExpectedReturn']
+	
+	resultList.append(optResult)
+	
+	while True:
+		minReturn += step
 		data = {'MinimumReturn': minReturn, 'Stocks' : [] }
 		headers = {'Content-Type': 'application/json', 'Accept': 'text/plain'}
 		assets = portfolio.assets
 		for i in range(len(assets)):
-			stock = {'Symbol': assets[i].symbol, 'MeanReturnRate': assets[i].getMeanROR(), 'Covariances': {}}
+			"""I CHANGED IT TO GET THE MEAN RATE OF RETURN FROM assets[i].getMeanROR() RATHER THAN assets[i].annmean"""
+			stock = {'Symbol': assets[i].symbol, 'MeanReturnRate': assets[i].mean*252, 'Covariances': {}}
 			for j in range(len(assets)):
 				stock['Covariances'][assets[j].symbol] = portfolio.cvmatrix[i][j]
 			data['Stocks'].append(stock)
-		
+			
 		request = urllib2.Request(url, json.dumps(data), headers)
 		resp = urllib2.urlopen(request)
 		optResult = json.loads(resp.read())
-		resultList.append(optResult)
-	
+		if optResult['Feasible'] == True:
+			resultList.append(optResult)
+		else:
+			break
+				
 	return resultList
+
+def efficientFrontier(portfolio, step = 0.0001):
+	url = "http://optimization.andrewgaspar.com/api/optimize"
+	data = {'Stocks' : [] }
+	headers = {'Content-Type': 'application/json', 'Accept': 'text/plain'}
+	assets = portfolio.assets
+	for i in range(len(assets)):
+		stock = {'Symbol': assets[i].symbol, 'MeanReturnRate': assets[i].mean*252, 'Covariances': {}}
+		for j in range(len(assets)):
+			stock['Covariances'][assets[j].symbol] = portfolio.cvmatrix[i][j]
+		data['Stocks'].append(stock)
 	
+	request = urllib2.Request(url, json.dumps(data), headers)
+	resp = urllib2.urlopen(request)
+	optResult = json.loads(resp.read())
 	
-		
+	minReturnRate = optResult['ExpectedReturn']
+
+	url = "http://optimization.andrewgaspar.com/api/frontier"
+	data = {'Step': step, 'MinimumReturn': minReturnRate, 'Stocks' : [] }
+	headers = {'Content-Type': 'application/json', 'Accept': 'text/plain'}
+	assets = portfolio.assets
+	for i in range(len(assets)):
+		stock = {'Symbol': assets[i].symbol, 'MeanReturnRate': assets[i].mean*252, 'Covariances': {}}
+		for j in range(len(assets)):
+			stock['Covariances'][assets[j].symbol] = portfolio.cvmatrix[i][j]
+		data['Stocks'].append(stock)
+	
+	request = urllib2.Request(url, json.dumps(data), headers)
+	resp = urllib2.urlopen(request)
+	optResultList = json.loads(resp.read())
+	return optResultList
 	

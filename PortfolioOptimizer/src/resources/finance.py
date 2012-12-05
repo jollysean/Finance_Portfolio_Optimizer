@@ -33,14 +33,13 @@ class Portfolio(object):
     def getMatrix(self,rates,matrixtype="correlation"):  
         A = num.empty(shape = (len(rates[0]),0))
         stdassetrr = []
-        meanrrs = []
+       
         for raterow in rates:
             assetrates, rfrates, marketrates = zip(*raterow)
             assetrr = []
             for i in range(0,len(assetrates)):
                 assetrr.append(assetrates[i]-rfrates[i])
             meanassetrr = num.mean(assetrr)
-            meanrrs.append(meanassetrr)
             stdassetrr.append(num.std(assetrr))
             excessrr = [rr-meanassetrr for rr in assetrr]
             excessrates = num.array(excessrr).T
@@ -58,7 +57,7 @@ class Portfolio(object):
         C = num.dot(A.T,A)/len(rates[0])
         print C
         if matrixtype == "covariance":
-            return C, stdmarketrr, meanrrs
+            return C, stdmarketrr#
         stdassetrr.append(stdmarketrr)
         B = num.empty(shape = (len(rates)+1, len(rates)+1))
         for i in range(0,len(stdassetrr)):
@@ -72,6 +71,7 @@ class Portfolio(object):
     def getWeightedReturn(self, meanrates,weights):
         meanrr = num.array(meanrates)
         print meanrates
+        print weights
         weights = num.array(weights)
         weightedrr = num.dot(meanrr.T, weights)*252
         print 'Weighted annualized mean return rate: '
@@ -125,7 +125,8 @@ class Asset:
             self.prices[p.date] = p
         self.weight = 0
         self.startdate = min([date for date,price in self.prices.iteritems()]) 
-        self.rates = self.getRatesOfReturn   
+        self.rates = {}  
+        self.annmean = 0
     
     def getVar(self, rates={}, startdate=None, ratemethod="Log", annualized=False):
         if len(rates)==0:
@@ -201,7 +202,7 @@ class Asset:
         meanasset = num.mean(assetrates)
         meanrf = num.mean(rfrates)
         stdasset = num.std(assetrates)
-        sharpe = (252/num.sqrt(252))*(meanasset-meanrf)/stdasset
+        sharpe = num.sqrt(252)*(meanasset-meanrf)/stdasset
         return sharpe
     
     def getRatesOfReturn(self, startdate=None, method="Log"):
@@ -209,7 +210,7 @@ class Asset:
             startdate = self.startdate
         prices = self.prices
 #        prices = [float(prices[date].adjclosing) for date in u.date_range(startdate) if date in prices.keys()])
-        dates = [d for d in u.date_range(startdate) if d in prices.keys()]
+        dates = [d for d in u.date_range(startdate) if prices.has_key(d)]
 
         rates = {}
         for i in range(len(dates)):

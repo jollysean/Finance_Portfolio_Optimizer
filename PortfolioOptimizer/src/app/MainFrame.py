@@ -6,6 +6,7 @@ import gui
 import src.resources.finance as fin
 import src.resources.utilities as u
 import numpy as num
+import scipy.interpolate.interpolate as interp
 import matplotlib.dates as mdates
 import matplotlib.backends.backend_wxagg as mpl
 import time
@@ -36,6 +37,34 @@ class MainFrame( gui.MainFrameBase ):
 		# TODO: Implement startDateChanged
 		pass
 	
+	def showEfficientFrontier(self, event):
+		expReturn = []
+		stdDeviation = []		
+		for s in self.portfolio.optimizationResults:
+			expReturn.append(s['ExpectedReturn'])
+			weights = []
+			for asset in self.portfolio.assets:
+				weights.extend([r['Allocation'] for r in s['Results'] if r['Symbol'] == asset.symbol])
+				
+			w = num.array(weights)
+			w2 = num.array(weights)
+			matrix = self.portfolio.cvmatrix[0:len(w),0:len(w)]
+			wvar = num.dot(w2.T, num.dot(matrix,w))
+			wstd = num.sqrt(wvar)*num.sqrt(252)*100
+			stdDeviation.append(wstd)
+		
+		sd = num.array(stdDeviation)
+		er = num.array(expReturn)
+		#xnew = num.linspace(sd.min(), sd.max(), 300)
+		plt.figure(1)
+		plt.subplot(111)
+		plt.plot(stdDeviation, expReturn, "o-")
+		#plt.Line2D(stdDeviation, expReturn)
+		plt.xlabel('Standard Deviation (Risk)')
+		plt.ylabel('Expected Rate of Return')
+		plt.title('Efficient Frontier')
+		plt.show()		
+		
 	def stockSelected( self, event ):
 		sym = self.m_stocklist.GetItemText(event.m_itemIndex).encode('ascii')
 		for s in self.portfolio.assets:
@@ -61,11 +90,12 @@ class MainFrame( gui.MainFrameBase ):
 		for asset in self.portfolio.assets:
 			returns.append(asset.getMeanROR(annualized=True))
 			risks.append(asset.getStd(annualized=True))
+			
 		plt.figure(1)
 		plt.subplot(111)
 		plt.scatter(returns, risks)
-		plt.xlabel('Average Return Rate on Asset')
-		plt.ylabel('Standard Deviation (Risk) of Asset')
+		plt.xlabel('Expected Rate of Return (Asset)')
+		plt.ylabel('Standard Deviation (Risk)')
 		plt.title('Portfolio Risk vs. Return')
 		plt.show()
 		
@@ -81,11 +111,9 @@ class MainFrame( gui.MainFrameBase ):
 			self.m_expectedMarketrrLabel.Hide()
 			self.m_marketReturnRate.Hide()
 		self.portfolio.returnmethod = method
-		self.calculateGrid()
+		#self.calculateGrid()
 		
-	
 	def m_addButtonClick( self, event ):
-		
 		"""Parse the text in the input box"""
 		stockstr = self.m_symbolinput.Value.encode('ascii')
 		stocks = stockstr.split(",")
@@ -113,10 +141,8 @@ class MainFrame( gui.MainFrameBase ):
 				self.m_stocklist.InsertStringItem(pos, asset.symbol)
 				self.m_stocklist.SetStringItem(pos,0, asset.symbol)
 				
-
-		
 	def calculateGrid(self):
-		allocations = self.portfolio.getAllocations()
+		
 		colcount = self.m_stocklist.ColumnCount
 		if colcount < 4:
 			self.m_stocklist.InsertColumn(0, "Symbol")
@@ -135,87 +161,141 @@ class MainFrame( gui.MainFrameBase ):
 			rfRates = u.getHistoricalRates(rfr)
 			mrRates = marketRetAsset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
 			dates = u.date_range(self.portfolio.startdate)
-			
+			meanrates = []
 			ratesmatrix = []
 			sharpes = {}
 			for asset in self.portfolio.assets:
 				rates = asset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
 				rateBundle = []
 				for d in dates:
-					if d in rfRates.keys() and d in mrRates.keys() and d in rates.keys():
+					if rfRates.has_key(d) and mrRates.has_key(d) and rates.has_key(d):
 						rateBundle.append((rates[d],rfRates[d],mrRates[d]))
-				
-				correlation = asset.getCorrelation(rateBundle)
-				beta = asset.getBeta(rateBundle, correlation)
-				sharpe = asset.getSharpe(rateBundle)
+										
+				asset.correlation = asset.getCorrelation(rateBundle)
+				asset.beta = asset.getBeta(rateBundle, asset.correlation)
+				asset.sharpe = asset.getSharpe(rateBundle)
 				
 				mostrecentrfr = max(rfRates.keys())
 				if self.portfolio.returnmethod=="CAPM":	
 					marketrr = float(self.m_marketReturnRate.Value)
-					annmean = 100 * asset.getMeanROR(rates, annualized=True, returnmethod="CAPM", marketrate=marketrr, rfrate=rfRates[mostrecentrfr], B=beta)
+					"""We are multiplying percentages by 100 (for displaying) but then we continue to use the standard deviations."""
+					mean = asset.getMeanROR(rates, annualized=False, returnmethod="CAPM", marketrate=marketrr, rfrate=rfRates[mostrecentrfr], B=asset.beta)
 				else:
-					annmean = 100 * asset.getMeanROR(rates, annualized=True, returnmethod="Historical")
-				annstd = 100 * asset.getStd(rates, annualized=True)
-				sharpes[asset] = sharpe
+					mean = asset.getMeanROR(rates, annualized=False, returnmethod="Historical")
+				asset.rates =rates
+				asset.mean = mean
+				
+				""" This will make annmeans a percentage of a percentage of annualized means?
+					SHOULDN'T BE USING ANNUALIZED FOR OPTIMIZATION?"""
+				"""annmeans.append(annmean/10000)"""
+				meanrates.append(mean)
+			
+				sharpes[asset] = asset.sharpe
 				
 				ratesmatrix.append(rateBundle)
-				print annmean
-				pos = self.m_stocklist.FindItem(-1, asset.symbol)	
-				if pos ==-1:
-					pos = self.m_stocklist.ItemCount
-					self.m_stocklist.InsertStringItem(pos, asset.symbol)
-					self.m_stocklist.SetStringItem(0,1, str("%.2f" % allocations[asset.symbol]))
-					self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annmean)+"%")
-					self.m_stocklist.SetStringItem(pos,3, str("%.2f" % annstd)+"%")
-					self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
-					self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
-					self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
-				else:
-					self.m_stocklist.SetStringItem(pos,1, str("%.2f" % allocations[asset.symbol]))
-					self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annmean)+"%")
-					self.m_stocklist.SetStringItem(pos,3, str("%.2f" % annstd)+"%")
-					self.m_stocklist.SetStringItem(pos,4, str("%.2f" % correlation))
-					self.m_stocklist.SetStringItem(pos,5, str("%.2f" % beta))
-					self.m_stocklist.SetStringItem(pos,6, str("%.2f" % sharpe))
 	
 			
-			"""TODO: Fix this. I'm assigning properties of portfolio based on the return of its own methods. 
-			         This is the epitome of tight coupling. Stop it. Right now."""
 			self.portfolio.ratesmatrix = ratesmatrix
 			cormatrix = self.portfolio.getMatrix(ratesmatrix)
 			self.portfolio.cormatrix = cormatrix
-			cvmatrix,stdmarket,meanrates= self.portfolio.getMatrix(ratesmatrix, "covariance")
+			cvmatrix,stdmarket = self.portfolio.getMatrix(ratesmatrix, "covariance")
 			self.portfolio.cvmatrix = cvmatrix
 			self.portfolio.stdmarket = stdmarket
 			self.portfolio.meanrates = meanrates
 			
-			results = u.optimizePortfolio(self.portfolio, numSamples=100)
-			for asset in self.portfolio.assets:
-				pass
+			if self.m_allocRads.GetSelection() == 1:
+				#results = u.optimizePortfolio(self.portfolio, step=0.001)
+				results = u.efficientFrontier(self.portfolio, step=0.0001)
 				
-			weights = [a.weight for a in reversed(self.portfolio.assets)]
-			wsharpe = 0
-			i=0
-			for asset in self.portfolio.assets:
-				wsharpe += sharpes[asset]*weights[i]
-				i=i+1
-			print "Weighted Sharpe:"
-			print wsharpe
+				self.portfolio.optimizationResults = results
+				
+				e = min([res['ExpectedReturn'] for res in results])
+				
+				minrisk = 10000000
+				optimalSolution = None
+				for s in results:		
+					tempweights = []
+					for asset in self.portfolio.assets:
+							tempweights.extend([w['Allocation'] for w in s['Results'] if w['Symbol'] == asset.symbol])
+				
+					tempwsharpe = 0
+					i=0
+					for asset in self.portfolio.assets:
+						tempwsharpe += sharpes[asset]*tempweights[i]
+						i=i+1
+					print "Weighted Sharpe:"
+					print tempwsharpe
+					
+					tempwcovwithmarket = self.portfolio.getWeightedCovariance(cvmatrix, tempweights, True)
+					tempwvar = self.portfolio.getWeightedCovariance(cvmatrix, tempweights, False)
+					""" getWeightedReturn annualizes the data. I think this means we end up annualizing it twice."""
+					tempwrr = self.portfolio.getWeightedReturn(meanrates, tempweights)*100
+					tempwcor = self.portfolio.getWeightedCorrelation(tempwcovwithmarket,tempwvar,stdmarket)
+					tempwbeta = self.portfolio.getWeightedBeta(tempwcor, tempwvar,stdmarket)
+					tempwstd = num.sqrt(tempwvar)*num.sqrt(252)*100
+					if tempwstd<minrisk:
+						i=0
+						for asset in self.portfolio.assets:
+							asset.weight =tempweights[i]
+							i = i+1
+						
+						minrisk=tempwstd
+						wrr = tempwrr
+						wcor = tempwcor
+						wbeta = tempwbeta
+						wstd=tempwstd
+						wsharpe=tempwsharpe
+						
+						
+				self.m_EFbutton.Show()
+				self.SetSize((self.GetSize().width, self.GetSize().height+1))
+				self.SetSize((self.GetSize().width, self.GetSize().height-1))
+			else:
+				weights = [a.weight for a in reversed(self.portfolio.assets)]
+				wsharpe = 0
+				i=0
+				for asset in self.portfolio.assets:
+					wsharpe += sharpes[asset]*weights[i]
+					i=i+1
+				print "Weighted Sharpe:"
+				print wsharpe
+				covwithmarket = self.portfolio.getWeightedCovariance(cvmatrix, weights, True)
+				wvar = self.portfolio.getWeightedCovariance(cvmatrix, weights, False)
+				wrr = self.portfolio.getWeightedReturn(meanrates, weights)*100
+				wcor = self.portfolio.getWeightedCorrelation(covwithmarket,wvar,stdmarket)
+				wbeta = self.portfolio.getWeightedBeta(wcor, wvar,stdmarket)
+				wstd = num.sqrt(wvar)*num.sqrt(252)*100
+				self.m_EFbutton.Hide()
 			
-			wcovwithmarket = self.portfolio.getWeightedCovariance(cvmatrix, weights, True)
-			self.portfolio.wcovwithmarket = wcovwithmarket
-			
-			wvar = self.portfolio.getWeightedCovariance(cvmatrix, weights, False)
-			wrr = self.portfolio.getWeightedReturn(meanrates, weights)*100
-			wcor = self.portfolio.getWeightedCorrelation(wcovwithmarket,wvar,stdmarket)
-			wbeta = self.portfolio.getWeightedBeta(wcor, wvar,stdmarket)
-			wstd = num.sqrt(wvar)*num.sqrt(252)*100
-
 			#wrr = wsharpe*wstd
+			"""
 			print "Weighted annualized mean return rate?"
 			print wrr
 			print "Weight standard deviation:"
 			print wstd
+			"""
+			
+			for asset in self.portfolio.assets:
+				pos = self.m_stocklist.FindItem(-1, asset.symbol)	
+				"""We're for displaying! ANd only displaying!"""
+				annmean = 100*252*asset.mean
+				annstd = 100 * asset.getStd(asset.rates, annualized=True)
+				if pos ==-1:
+					pos = self.m_stocklist.ItemCount
+					self.m_stocklist.InsertStringItem(pos, asset.symbol)
+					self.m_stocklist.SetStringItem(0,1, str("%.2f" %  asset.weight))
+					self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annmean)+"%")
+					self.m_stocklist.SetStringItem(pos,3, str("%.2f" % annstd)+"%")
+					self.m_stocklist.SetStringItem(pos,4, str("%.2f" % asset.correlation))
+					self.m_stocklist.SetStringItem(pos,5, str("%.2f" % asset.beta))
+					self.m_stocklist.SetStringItem(pos,6, str("%.2f" % asset.sharpe))
+				else:
+					self.m_stocklist.SetStringItem(pos,1, str("%.2f" % asset.weight))
+					self.m_stocklist.SetStringItem(pos,2, str("%.2f" % annmean)+"%")
+					self.m_stocklist.SetStringItem(pos,3, str("%.2f" % annstd)+"%")
+					self.m_stocklist.SetStringItem(pos,4, str("%.2f" % asset.correlation))
+					self.m_stocklist.SetStringItem(pos,5, str("%.2f" % asset.beta))
+					self.m_stocklist.SetStringItem(pos,6, str("%.2f" % asset.sharpe))
 			
 			self.m_portfoliolist.SetStringItem(0,1, str("%.2f" % 1.00))
 			self.m_portfoliolist.SetStringItem(0,2, str("%.2f" % wrr)+"%")
@@ -274,8 +354,8 @@ class MainFrame( gui.MainFrameBase ):
 			self.portfolio.ratemethod = "Log"
 		for asset in self.portfolio.assets:
 			asset.rates = asset.getRatesOfReturn(self.portfolio.startdate, self.portfolio.ratemethod)
-		
-		if self.m_backtestCB.IsChecked():
+			
+		if self.m_allocRads.GetSelection() == 0:
 			self.weightDialog = WeightDialog(self, self.portfolio)
 			self.weightDialog.Show()
 		else:
