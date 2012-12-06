@@ -182,6 +182,11 @@ class MainFrameBase ( wx.Frame ):
 		
 		bSizer91.Add( self.m_EFbutton, 0, wx.ALL|wx.EXPAND, 5 )
 		
+		self.m_allocations = wx.Button( self.m_panel, wx.ID_ANY, u"Show Allocations", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_allocations.Hide()
+		
+		bSizer91.Add( self.m_allocations, 0, wx.ALL|wx.EXPAND, 5 )
+		
 		bSizer21 = wx.BoxSizer( wx.HORIZONTAL )
 		
 		
@@ -246,6 +251,7 @@ class MainFrameBase ( wx.Frame ):
 		self.m_rfRadBox.Bind( wx.EVT_RADIOBOX, self.rfrChanged )
 		self.m_meanCalcRadBox.Bind( wx.EVT_RADIOBOX, self.meanCalcMethChanged )
 		self.m_EFbutton.Bind( wx.EVT_BUTTON, self.showEfficientFrontier )
+		self.m_allocations.Bind( wx.EVT_BUTTON, self.showAllocationPlot )
 		self.m_returnType.Bind( wx.EVT_RADIOBOX, self.m_returnTypeChanged )
 		self.m_analyzeButton.Bind( wx.EVT_BUTTON, self.analyzeButtonClicked )
 	
@@ -288,6 +294,9 @@ class MainFrameBase ( wx.Frame ):
 		event.Skip()
 	
 	def showEfficientFrontier( self, event ):
+		event.Skip()
+	
+	def showAllocationPlot( self, event ):
 		event.Skip()
 	
 	def m_returnTypeChanged( self, event ):

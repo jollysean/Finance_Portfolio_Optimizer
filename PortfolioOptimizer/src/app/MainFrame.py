@@ -63,6 +63,23 @@ class MainFrame( gui.MainFrameBase ):
 		plt.title('Efficient Frontier')
 		plt.show()		
 		
+	def showAllocationPlot(self, event):
+		labels = []
+		explode = []
+		allocations = []	
+		for asset in self.portfolio.assets:
+			labels.append(asset.symbol)
+			allocations.append(asset.weight)
+			explode.append(0)
+		
+		#xnew = num.linspace(sd.min(), sd.max(), 300)
+		plt.figure(3)
+		plt.subplot(111)
+		plt.pie(allocations, explode=explode, labels=labels)
+		#plt.Line2D(stdDeviation, expReturn)
+		plt.title('Asset Allocations')
+		plt.show()		
+		
 	def stockSelected( self, event ):
 		sym = self.m_stocklist.GetItemText(event.m_itemIndex).encode('ascii')
 		for s in self.portfolio.assets:
@@ -75,7 +92,7 @@ class MainFrame( gui.MainFrameBase ):
 		
 		data = zip(*prices)
 		
-		plt.figure(1)
+		plt.figure(2)
 		plt.subplot(111)
 		plt.plot_date(data[0], data[1], '-', xdate=True)
 		plt.ylabel("Market Value")
@@ -276,6 +293,7 @@ class MainFrame( gui.MainFrameBase ):
 						
 						
 				self.m_EFbutton.Show()
+				self.m_allocations.Show()
 				self.SetSize((self.GetSize().width, self.GetSize().height+1))
 				self.SetSize((self.GetSize().width, self.GetSize().height-1))
 			else:
