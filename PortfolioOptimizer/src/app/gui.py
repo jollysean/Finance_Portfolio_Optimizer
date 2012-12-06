@@ -138,8 +138,6 @@ class MainFrameBase ( wx.Frame ):
 		self.m_panel6.Layout()
 		bSizer17.Fit( self.m_panel6 )
 		self.m_notebook4.AddPage( self.m_panel6, u"Correlations", False )
-		self.m_panel61 = wx.Panel( self.m_notebook4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
-		self.m_notebook4.AddPage( self.m_panel61, u"a page", False )
 		
 		bSizer13.Add( self.m_notebook4, 1, wx.EXPAND |wx.ALL, 5 )
 		
@@ -179,10 +177,10 @@ class MainFrameBase ( wx.Frame ):
 		
 		bSizer91 = wx.BoxSizer( wx.HORIZONTAL )
 		
-		self.m_button5 = wx.Button( self.m_panel, wx.ID_ANY, u"Show Efficient Frontier", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_button5.Hide()
+		self.m_EFbutton = wx.Button( self.m_panel, wx.ID_ANY, u"Show Efficient Frontier", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_EFbutton.Hide()
 		
-		bSizer91.Add( self.m_button5, 0, wx.ALL|wx.EXPAND, 5 )
+		bSizer91.Add( self.m_EFbutton, 0, wx.ALL|wx.EXPAND, 5 )
 		
 		bSizer21 = wx.BoxSizer( wx.HORIZONTAL )
 		
@@ -247,7 +245,7 @@ class MainFrameBase ( wx.Frame ):
 		self.m_startingdate.Bind( wx.EVT_DATE_CHANGED, self.startDateChanged )
 		self.m_rfRadBox.Bind( wx.EVT_RADIOBOX, self.rfrChanged )
 		self.m_meanCalcRadBox.Bind( wx.EVT_RADIOBOX, self.meanCalcMethChanged )
-		self.m_button5.Bind( wx.EVT_BUTTON, self.showEfficientFrontier )
+		self.m_EFbutton.Bind( wx.EVT_BUTTON, self.showEfficientFrontier )
 		self.m_returnType.Bind( wx.EVT_RADIOBOX, self.m_returnTypeChanged )
 		self.m_analyzeButton.Bind( wx.EVT_BUTTON, self.analyzeButtonClicked )
 	
@@ -407,8 +405,8 @@ class StockSelectorDialogBase ( wx.Dialog ):
 		self.m_staticText8.Wrap( -1 )
 		bSizer22.Add( self.m_staticText8, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 		
-		self.m_spinCtrl1 = wx.SpinCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 50,-1 ), wx.SP_ARROW_KEYS, 0, 10, 0 )
-		bSizer22.Add( self.m_spinCtrl1, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		self.m_stockCount = wx.SpinCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 50,-1 ), wx.SP_ARROW_KEYS, 0, 10, 0 )
+		bSizer22.Add( self.m_stockCount, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 		
 		self.m_staticText9 = wx.StaticText( self, wx.ID_ANY, u"securities", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText9.Wrap( -1 )
@@ -422,10 +420,10 @@ class StockSelectorDialogBase ( wx.Dialog ):
 		self.m_staticText7.Wrap( -1 )
 		bSizer23.Add( self.m_staticText7, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 		
-		m_choice1Choices = [ u"DOW 30", u"S&P 500" ]
-		self.m_choice1 = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 70,-1 ), m_choice1Choices, 0 )
-		self.m_choice1.SetSelection( 1 )
-		bSizer23.Add( self.m_choice1, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		m_indexChoiceChoices = [ u"DOW 30", u"S&P 500" ]
+		self.m_indexChoice = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 70,-1 ), m_indexChoiceChoices, 0 )
+		self.m_indexChoice.SetSelection( 1 )
+		bSizer23.Add( self.m_indexChoice, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 		
 		bSizer21.Add( bSizer23, 1, 0, 5 )
 		
@@ -435,14 +433,15 @@ class StockSelectorDialogBase ( wx.Dialog ):
 		self.m_staticText10.Wrap( -1 )
 		bSizer24.Add( self.m_staticText10, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 		
-		m_choice3Choices = [ u"highest", u"lowest" ]
-		self.m_choice3 = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 70,-1 ), m_choice3Choices, 0 )
-		self.m_choice3.SetSelection( 0 )
-		bSizer24.Add( self.m_choice3, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		m_sortReverseChoices = [ u"highest", u"lowest" ]
+		self.m_sortReverse = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 70,-1 ), m_sortReverseChoices, 0 )
+		self.m_sortReverse.SetSelection( 0 )
+		bSizer24.Add( self.m_sortReverse, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 		
-		m_comboBox2Choices = []
-		self.m_comboBox2 = wx.ComboBox( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 100,-1 ), m_comboBox2Choices, 0 )
-		bSizer24.Add( self.m_comboBox2, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		m_sortedByChoices = [ u"Market Cap", u"P/E Ratio", u"PEG Ratio", u"Dividend Yield", u"Dividend/Share", u"Earnings/Share" ]
+		self.m_sortedBy = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 100,-1 ), m_sortedByChoices, 0 )
+		self.m_sortedBy.SetSelection( 0 )
+		bSizer24.Add( self.m_sortedBy, 0, wx.ALL, 5 )
 		
 		bSizer21.Add( bSizer24, 1, 0, 5 )
 		
@@ -473,3 +472,5 @@ class StockSelectorDialogBase ( wx.Dialog ):
 	
 	def stockSelectorOK( self, event ):
 		event.Skip()
+	
+

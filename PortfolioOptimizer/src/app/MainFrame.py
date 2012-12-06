@@ -150,8 +150,15 @@ class MainFrame( gui.MainFrameBase ):
 		dialog.SetSizeWH(300, 120)
 		dialog.CenterOnParent()
 		dialog.ShowModal()
+	
+	def stockSelectorClosed(self, stocks):	
+		string = ""
+		for s in stocks:
+			string = string + s + ","
+		input = string[:-1]
+		self.m_symbolinput.SetValue(input)
+		self.m_addButtonClick(event = {})
 		
-				
 	def updateGridSymbols(self):
 		colcount = self.m_stocklist.ColumnCount
 		if colcount < 1:
@@ -503,7 +510,23 @@ class StockSelectorDialog(gui.StockSelectorDialogBase):
 		gui.StockSelectorDialogBase.__init__( self, parent )
 		
 	def stockSelectorCancel( self, event ):
-		event.Skip()
+		self.Hide()
+		self.Destroy()
 	
 	def stockSelectorOK( self, event ):
-		event.Skip()
+		stockCount = self.m_stockCount.GetValue()
+		if self.m_indexChoice.GetSelection() == 1:
+			markIndex = "SP"
+		else:
+			markIndex = "DOW"		
+		sortBy = self.m_sortedBy.GetStringSelection()
+		if self.m_sortReverse.GetSelection() == 0:
+			reverse = False
+		else:
+			reverse = True
+			
+		stocks = u.readStocksFromFile(stockCount, markIndex, sortBy, reverse)
+		s, _ = zip(*stocks)
+		self.Hide()
+		self.GetParent().stockSelectorClosed(s)
+		self.Destroy()

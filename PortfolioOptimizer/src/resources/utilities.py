@@ -1,10 +1,12 @@
-import csv
-import urllib2
-import json
-import finance as fin
-import datetime as dt
-import sys
 from StringIO import StringIO as sIO
+import csv
+import datetime as dt
+import finance as fin
+import json
+import sys
+import urllib2
+from operator import itemgetter
+
 	
 	
 source = 'http://ichart.finance.yahoo.com/table.csv?s='
@@ -25,6 +27,22 @@ def getHistoricalRates(indexSymbol):
 	for row in dReader:
 		histRates[dt.datetime.strptime(row['Date'], dateFormat).date()] = (float(row['Adj Close'])/100.0)/365
 	return histRates
+
+def readStocksFromFile(stockCount, markIndex, sortBy, reverse):
+	if markIndex=="SP":
+		f = open("S&P500.csv")
+	else:
+		f = open("DOW30.csv")
+		
+	vals = f.read()
+	dReader = csv.DictReader(sIO(vals))
+	stocks = [(row['Symbol'], row[sortBy]) for row in dReader]
+	stocks = sorted(stocks, key=itemgetter(1), reverse=reverse)
+	if stockCount < len(stocks):
+		return stocks[:stockCount]
+	else:
+		return stocks
+	
 
 def createDateSuffix(day, month, year):
 	suff = '&a='

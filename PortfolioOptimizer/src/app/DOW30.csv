@@ -1,0 +1,31 @@
+Symbol,Name,MarketCap,PERatio,PEGRatio,DividendYield,Dividend/Share,Earnings/Share,EBITDA,%Change 200 day
+MMM,3M Company Common,62.800B,14.51,1.4,2.6,2.36,6.256,7.677B,0.79%
+AA,Alcoa Inc. Common,9.146B,N/A,2.84,1.4,0.12,-0.227,1.961B,-1.03%
+AXP,American Express ,63.115B,13.06,1.15,1.38,0.78,4.317,0,-0.75%
+T,AT&T Inc.,192.6B,44.85,2.24,5.19,1.76,0.756,35.200B,-5.20%
+BAC,Bank of America C,112.7B,28.27,2.97,0.38,0.04,0.37,0,24.52%
+BA,Boeing Company (T,55.704B,13.01,1.24,2.38,1.76,5.678,7.727B,2.55%
+CAT,"Caterpillar, Inc.",56.271B,8.82,0.66,2.28,1.96,9.761,12.103B,0.27%
+CVX,Chevron Corporati,205.8B,8.63,N/A,3.34,3.51,12.189,48.514B,-3.03%
+CSCO,"Cisco Systems, In",102.0B,12.39,1.16,2.6,0.5,1.55,13.233B,8.61%
+DD,E.I. du Pont de N,39.742B,13.19,2.71,3.99,1.7,3.232,6.510B,-11.78%
+XOM,Exxon Mobil Corpo,400.0B,9.28,1.76,2.48,2.18,9.456,64.877B,0.66%
+GE,General Electric ,222.6B,16.81,1.25,3.2,0.68,1.263,24.356B,1.99%
+HPQ,Hewlett-Packard C,27.142B,N/A,N/A,3.65,0.504,-6.41,14.384B,-21.15%
+HD,"Home Depot, Inc. ",95.721B,22.75,1.33,1.81,1.16,2.814,9.117B,13.46%
+INTC,Intel Corporation,98.774B,8.66,0.78,4.38,0.87,2.293,23.188B,-17.37%
+IBM,International Bus,213.2B,13.56,1.29,1.75,3.3,13.913,26.513B,-3.88%
+JNJ,Johnson & Johnson,193.9B,22.92,2.24,3.43,2.4,3.053,20.446B,2.94%
+JPM,JP Morgan Chase &,156.6B,8.74,1.21,2.79,1.15,4.713,0,8.58%
+MCD,McDonald's Corpor,87.316B,16.38,1.95,3.3,2.87,5.31,9.780B,-2.54%
+MRK,"Merck & Company, ",134.9B,20.18,3.69,3.78,1.68,2.2,17.785B,3.00%
+MSFT,Microsoft Corpora,224.5B,14.42,0.99,3.11,0.83,1.85,28.792B,-9.56%
+PFE,"Pfizer, Inc. Comm",188.8B,20.08,5.12,3.43,0.88,1.277,26.769B,7.56%
+PG,Procter & Gamble ,189.8B,19.33,2.19,3.19,2.211,3.59,19.146B,5.06%
+KO,Coca-Cola Company,167.3B,19.5,2.28,2.73,1.02,1.913,13.012B,-1.96%
+TRV,The Travelers Com,28.227B,10.57,0.88,1.8,1.33,7.004,4.835B,11.97%
+UTX,United Technologi,73.534B,16.49,1.3,2.53,2.03,4.865,9.628B,4.46%
+UNH,UnitedHealth Grou,54.997B,10.26,0.97,1.09,0.589,5.246,10.079B,-2.37%
+VZ,Verizon Communica,125.9B,40.76,1.61,4.57,2.015,1.082,31.720B,0.27%
+WMT,"Wal-Mart Stores, ",241.0B,14.74,1.58,2.22,1.592,4.86,35.987B,-0.20%
+DIS,Walt Disney Compa,87.880B,15.84,1.23,1.21,0.6,3.13,10.971B,0.78%
