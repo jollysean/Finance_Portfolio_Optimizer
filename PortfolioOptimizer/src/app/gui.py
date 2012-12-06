@@ -19,9 +19,23 @@ m_mniExitId = 1000
 class MainFrameBase ( wx.Frame ):
 	
 	def __init__( self, parent ):
-		wx.Frame.__init__  ( self, parent, id = wx.ID_ANY, title = u"Portfolio Optimizer", pos = wx.DefaultPosition, size = wx.Size( 590,608 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__  ( self, parent, id = wx.ID_ANY, title = u"Portfolio Optimizer", pos = wx.DefaultPosition, size = wx.Size( 653,526 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
+		
+		self.m_menubar = wx.MenuBar( 0 )
+		self.m_mnFile = wx.Menu()
+		self.m_openStockSelector = wx.MenuItem( self.m_mnFile, wx.ID_ANY, u"Stock Selector", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_mnFile.AppendItem( self.m_openStockSelector )
+		
+		self.m_mnFile.AppendSeparator()
+		
+		self.m_mniExit = wx.MenuItem( self.m_mnFile, m_mniExitId, u"&Exit", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_mnFile.AppendItem( self.m_mniExit )
+		
+		self.m_menubar.Append( self.m_mnFile, u"&File" )
+		
+		self.SetMenuBar( self.m_menubar )
 		
 		bSizer2 = wx.BoxSizer( wx.VERTICAL )
 		
@@ -77,12 +91,12 @@ class MainFrameBase ( wx.Frame ):
 		self.m_panel41 = wx.Panel( self.m_notebook4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer131 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_portfoliolist = wx.ListCtrl( self.m_panel41, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,75 ), wx.LC_HRULES|wx.LC_REPORT|wx.LC_VRULES )
+		self.m_portfoliolist = wx.ListCtrl( self.m_panel41, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,75 ), wx.LC_AUTOARRANGE|wx.LC_HRULES|wx.LC_REPORT|wx.LC_VRULES )
 		self.m_portfoliolist.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
 		
-		bSizer131.Add( self.m_portfoliolist, 1, wx.ALL|wx.EXPAND, 5 )
+		bSizer131.Add( self.m_portfoliolist, 0, wx.EXPAND|wx.ALL, 5 )
 		
-		self.m_stocklist = wx.ListCtrl( self.m_panel41, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,200 ), wx.LC_HRULES|wx.LC_NO_HEADER|wx.LC_NO_SORT_HEADER|wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.LC_VRULES )
+		self.m_stocklist = wx.ListCtrl( self.m_panel41, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,120 ), wx.LC_HRULES|wx.LC_NO_HEADER|wx.LC_NO_SORT_HEADER|wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.LC_VRULES )
 		self.m_stocklist.SetMaxSize( wx.Size( -1,300 ) )
 		
 		bSizer131.Add( self.m_stocklist, 0, wx.ALL|wx.EXPAND, 5 )
@@ -124,6 +138,8 @@ class MainFrameBase ( wx.Frame ):
 		self.m_panel6.Layout()
 		bSizer17.Fit( self.m_panel6 )
 		self.m_notebook4.AddPage( self.m_panel6, u"Correlations", False )
+		self.m_panel61 = wx.Panel( self.m_notebook4, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
+		self.m_notebook4.AddPage( self.m_panel61, u"a page", False )
 		
 		bSizer13.Add( self.m_notebook4, 1, wx.EXPAND |wx.ALL, 5 )
 		
@@ -163,10 +179,10 @@ class MainFrameBase ( wx.Frame ):
 		
 		bSizer91 = wx.BoxSizer( wx.HORIZONTAL )
 		
-		self.m_EFbutton = wx.Button( self.m_panel, wx.ID_ANY, u"Show Efficient Frontier", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_EFbutton.Hide()
+		self.m_button5 = wx.Button( self.m_panel, wx.ID_ANY, u"Show Efficient Frontier", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_button5.Hide()
 		
-		bSizer91.Add( self.m_EFbutton, 0, wx.ALL|wx.EXPAND, 5 )
+		bSizer91.Add( self.m_button5, 0, wx.ALL|wx.EXPAND, 5 )
 		
 		bSizer21 = wx.BoxSizer( wx.HORIZONTAL )
 		
@@ -216,21 +232,12 @@ class MainFrameBase ( wx.Frame ):
 		
 		self.SetSizer( bSizer2 )
 		self.Layout()
-		self.m_menubar = wx.MenuBar( 0 )
-		self.m_mnFile = wx.Menu()
-		self.m_mnFile.AppendSeparator()
-		
-		self.m_mniExit = wx.MenuItem( self.m_mnFile, m_mniExitId, u"&Exit", wx.EmptyString, wx.ITEM_NORMAL )
-		self.m_mnFile.AppendItem( self.m_mniExit )
-		
-		self.m_menubar.Append( self.m_mnFile, u"&File" )
-		
-		self.SetMenuBar( self.m_menubar )
-		
 		
 		self.Centre( wx.BOTH )
 		
 		# Connect Events
+		self.Bind( wx.EVT_MENU, self.openStockSelector, id = wx.ID_ANY )
+		self.Bind( wx.EVT_MENU, self.m_mniExitClick, id = m_mniExitId )
 		self.m_addbutton.Bind( wx.EVT_BUTTON, self.m_addButtonClick )
 		self.m_clearSelButton.Bind( wx.EVT_BUTTON, self.removeSelClicked )
 		self.m_clearAllButton.Bind( wx.EVT_BUTTON, self.removeAllClicked )
@@ -240,16 +247,21 @@ class MainFrameBase ( wx.Frame ):
 		self.m_startingdate.Bind( wx.EVT_DATE_CHANGED, self.startDateChanged )
 		self.m_rfRadBox.Bind( wx.EVT_RADIOBOX, self.rfrChanged )
 		self.m_meanCalcRadBox.Bind( wx.EVT_RADIOBOX, self.meanCalcMethChanged )
-		self.m_EFbutton.Bind( wx.EVT_BUTTON, self.showEfficientFrontier )
+		self.m_button5.Bind( wx.EVT_BUTTON, self.showEfficientFrontier )
 		self.m_returnType.Bind( wx.EVT_RADIOBOX, self.m_returnTypeChanged )
 		self.m_analyzeButton.Bind( wx.EVT_BUTTON, self.analyzeButtonClicked )
-		self.Bind( wx.EVT_MENU, self.m_mniExitClick, id = m_mniExitId )
 	
 	def __del__( self ):
 		pass
 	
 	
 	# Virtual event handlers, overide them in your derived class
+	def openStockSelector( self, event ):
+		event.Skip()
+	
+	def m_mniExitClick( self, event ):
+		event.Skip()
+	
 	def m_addButtonClick( self, event ):
 		event.Skip()
 	
@@ -284,9 +296,6 @@ class MainFrameBase ( wx.Frame ):
 		event.Skip()
 	
 	def analyzeButtonClicked( self, event ):
-		event.Skip()
-	
-	def m_mniExitClick( self, event ):
 		event.Skip()
 	
 
@@ -377,3 +386,90 @@ class WeightDialogBase ( wx.Frame ):
 		event.Skip()
 	
 
+###########################################################################
+## Class StockSelectorDialogBase
+###########################################################################
+
+class StockSelectorDialogBase ( wx.Dialog ):
+	
+	def __init__( self, parent ):
+		wx.Dialog.__init__  ( self, parent, id = wx.ID_ANY, title = u"Stock Selector", pos = wx.DefaultPosition, size = wx.Size( 257,164 ), style = wx.CLOSE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.STAY_ON_TOP )
+		
+		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
+		
+		bSizer20 = wx.BoxSizer( wx.HORIZONTAL )
+		
+		bSizer21 = wx.BoxSizer( wx.VERTICAL )
+		
+		bSizer22 = wx.BoxSizer( wx.HORIZONTAL )
+		
+		self.m_staticText8 = wx.StaticText( self, wx.ID_ANY, u"Select", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText8.Wrap( -1 )
+		bSizer22.Add( self.m_staticText8, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		
+		self.m_spinCtrl1 = wx.SpinCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 50,-1 ), wx.SP_ARROW_KEYS, 0, 10, 0 )
+		bSizer22.Add( self.m_spinCtrl1, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		
+		self.m_staticText9 = wx.StaticText( self, wx.ID_ANY, u"securities", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText9.Wrap( -1 )
+		bSizer22.Add( self.m_staticText9, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		
+		bSizer21.Add( bSizer22, 1, 0, 5 )
+		
+		bSizer23 = wx.BoxSizer( wx.HORIZONTAL )
+		
+		self.m_staticText7 = wx.StaticText( self, wx.ID_ANY, u"from the ", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText7.Wrap( -1 )
+		bSizer23.Add( self.m_staticText7, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		
+		m_choice1Choices = [ u"DOW 30", u"S&P 500" ]
+		self.m_choice1 = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 70,-1 ), m_choice1Choices, 0 )
+		self.m_choice1.SetSelection( 1 )
+		bSizer23.Add( self.m_choice1, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		
+		bSizer21.Add( bSizer23, 1, 0, 5 )
+		
+		bSizer24 = wx.BoxSizer( wx.HORIZONTAL )
+		
+		self.m_staticText10 = wx.StaticText( self, wx.ID_ANY, u"with the ", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText10.Wrap( -1 )
+		bSizer24.Add( self.m_staticText10, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		
+		m_choice3Choices = [ u"highest", u"lowest" ]
+		self.m_choice3 = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 70,-1 ), m_choice3Choices, 0 )
+		self.m_choice3.SetSelection( 0 )
+		bSizer24.Add( self.m_choice3, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		
+		m_comboBox2Choices = []
+		self.m_comboBox2 = wx.ComboBox( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 100,-1 ), m_comboBox2Choices, 0 )
+		bSizer24.Add( self.m_comboBox2, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		
+		bSizer21.Add( bSizer24, 1, 0, 5 )
+		
+		m_sdbSizer2 = wx.StdDialogButtonSizer()
+		self.m_sdbSizer2OK = wx.Button( self, wx.ID_OK )
+		m_sdbSizer2.AddButton( self.m_sdbSizer2OK )
+		self.m_sdbSizer2Cancel = wx.Button( self, wx.ID_CANCEL )
+		m_sdbSizer2.AddButton( self.m_sdbSizer2Cancel )
+		m_sdbSizer2.Realize();
+		bSizer21.Add( m_sdbSizer2, 1, wx.ALL|wx.ALIGN_RIGHT|wx.EXPAND, 5 )
+		
+		bSizer20.Add( bSizer21, 1, wx.EXPAND, 5 )
+		
+		self.SetSizer( bSizer20 )
+		self.Layout()
+		
+		# Connect Events
+		self.m_sdbSizer2Cancel.Bind( wx.EVT_BUTTON, self.stockSelectorCancel )
+		self.m_sdbSizer2OK.Bind( wx.EVT_BUTTON, self.stockSelectorOK )
+	
+	def __del__( self ):
+		pass
+	
+	
+	# Virtual event handlers, overide them in your derived class
+	def stockSelectorCancel( self, event ):
+		event.Skip()
+	
+	def stockSelectorOK( self, event ):
+		event.Skip()

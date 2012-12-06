@@ -6,13 +6,10 @@ import gui
 import src.resources.finance as fin
 import src.resources.utilities as u
 import numpy as num
-import scipy.interpolate.interpolate as interp
-import matplotlib.dates as mdates
-import matplotlib.backends.backend_wxagg as mpl
-import time
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
 import matplotlib.pyplot as plt
 from operator import itemgetter
+import threading
+import time
 
 # Implementing MainFrameBase
 class MainFrame( gui.MainFrameBase ):
@@ -20,16 +17,17 @@ class MainFrame( gui.MainFrameBase ):
 		gui.MainFrameBase.__init__( self, parent )
 		self.portfolio = portfolio
 		self.initPortGrid()
+		self.CenterOnScreen()
 		
 	# Handlers for MainFrameBase events.
 	def initPortGrid(self):
 		self.m_portfoliolist.InsertColumn(0,'')
-		self.m_portfoliolist.InsertColumn(1, "Allocation")
-		self.m_portfoliolist.InsertColumn(2, "Mean Rate")
-		self.m_portfoliolist.InsertColumn(3, "Std. Deviation", width=120)
-		self.m_portfoliolist.InsertColumn(4, "Correlation")
-		self.m_portfoliolist.InsertColumn(5, "Beta")
-		self.m_portfoliolist.InsertColumn(6, "Sharpe Ratio")
+		self.m_portfoliolist.InsertColumn(1, "Allocation", width=-2)
+		self.m_portfoliolist.InsertColumn(2, "Mean Rate",width=-2)
+		self.m_portfoliolist.InsertColumn(3, "Std. Deviation",width=-2)
+		self.m_portfoliolist.InsertColumn(4, "Correlation",width=-2)
+		self.m_portfoliolist.InsertColumn(5, "Beta",width=-2)
+		self.m_portfoliolist.InsertColumn(6, "Sharpe Ratio",width=-2)
 		self.m_portfoliolist.InsertStringItem(0, "Portfolio")
 		self.m_portfoliolist.SetStringItem(0,1, str("%.2f" % 1.00))
 		
@@ -112,8 +110,8 @@ class MainFrame( gui.MainFrameBase ):
 			self.m_marketReturnRate.Hide()
 		self.portfolio.returnmethod = method
 		#self.calculateGrid()
-		
-	def m_addButtonClick( self, event ):
+	
+	def fetchPriceHistory(self, dialog):
 		"""Parse the text in the input box"""
 		stockstr = self.m_symbolinput.Value.encode('ascii')
 		stocks = stockstr.split(",")
@@ -122,13 +120,37 @@ class MainFrame( gui.MainFrameBase ):
 		"""Get the historical prices and
 		create a new Asset object for each stock symbol"""
 		curSymbols = [a.symbol for a in self.portfolio.assets]
+		inc = 100/len(stocks)
+		i = 0
 		for s in stocks:
 			if s not in curSymbols:
-				prices = u.getHistoricalPrices(s)
-				asset = fin.Asset(s, prices)
-				self.portfolio.addAsset(asset)
+				wx.CallAfter(dialog.Update, i*inc, "Fetching %s historical data"%(s))
+				i = i+1
+				try:
+					prices = u.getHistoricalPrices(s)
+					asset = fin.Asset(s, prices)
+					self.portfolio.addAsset(asset)
+				except:
+					message = "Could not find data for %s \n Perhaps it's not a real stock symbol?"%(s)			
+					wx.MessageBox(message, 'Error', wx.OK | wx.ICON_INFORMATION)
+					continue
+				
 		self.m_symbolinput.SetValue("")
 		self.updateGridSymbols()
+		wx.CallAfter(dialog.Destroy)
+		
+	def showProgressWhile(self, func, *args):
+		thread = threading.Thread(target=self.fetchPriceHistory,args=args)
+		thread.setDaemon(True)
+		thread.start()
+		
+	def m_addButtonClick( self, event ):
+		dialog = wx.ProgressDialog("Fetching data", "Please wait...", parent=self)
+		self.showProgressWhile(self.fetchPriceHistory, dialog)
+		dialog.SetSizeWH(300, 120)
+		dialog.CenterOnParent()
+		dialog.ShowModal()
+		
 				
 	def updateGridSymbols(self):
 		colcount = self.m_stocklist.ColumnCount
@@ -140,9 +162,8 @@ class MainFrame( gui.MainFrameBase ):
 				pos = self.m_stocklist.ItemCount
 				self.m_stocklist.InsertStringItem(pos, asset.symbol)
 				self.m_stocklist.SetStringItem(pos,0, asset.symbol)
-				
+			
 	def calculateGrid(self):
-		
 		colcount = self.m_stocklist.ColumnCount
 		if colcount < 4:
 			self.m_stocklist.InsertColumn(0, "Symbol")
@@ -357,6 +378,7 @@ class MainFrame( gui.MainFrameBase ):
 			
 		if self.m_allocRads.GetSelection() == 0:
 			self.weightDialog = WeightDialog(self, self.portfolio)
+			self.weightDialog.CenterOnParent()
 			self.weightDialog.Show()
 		else:
 			self.calculateGrid()
@@ -397,10 +419,15 @@ class MainFrame( gui.MainFrameBase ):
 		self.portfolio.ratemethod = method
 		#self.calculateGrid()
 	
+	def openStockSelector( self, event ):
+		self.stockSelector = StockSelectorDialog(self)
+		self.stockSelector.CenterOnParent()
+		self.stockSelector.Show()
+	
 	def m_mniExitClick( self, event ):
 		# TODO: Implement m_mniExitClick
 		pass
-
+	
 class WeightDialog( gui.WeightDialogBase ):
 	def __init__( self, parent, portfolio ):
 		gui.WeightDialogBase.__init__( self, parent )
@@ -470,3 +497,13 @@ class WeightDialog( gui.WeightDialogBase ):
 		self.Hide()
 		self.GetParent().calculateGrid()
 		self.Destroy()
+
+class StockSelectorDialog(gui.StockSelectorDialogBase):
+	def __init__( self, parent ):
+		gui.StockSelectorDialogBase.__init__( self, parent )
+		
+	def stockSelectorCancel( self, event ):
+		event.Skip()
+	
+	def stockSelectorOK( self, event ):
+		event.Skip()
